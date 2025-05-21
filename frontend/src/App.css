@@ -1,0 +1,45 @@
+.App {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.top-left {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.top-right {
+  position: absolute;
+  top: 16px;
+  right: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.goban-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}

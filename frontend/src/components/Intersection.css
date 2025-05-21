@@ -1,0 +1,42 @@
+/* The grid square */
+.intersection-cell {
+  background-color: #d1d1d1;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #aaa; /* Simulates Go board lines */
+  display: flex;
+  /* align-items: center; */
+  /* justify-content: center; */
+  box-sizing: border-box;
+}
+
+/* The circular hoverable button */
+.intersection-dot {
+  width: 30px;
+  height: 30px;
+  background-color: transparent;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0;
+  margin-left: -15px;
+  margin-top: -15px;
+}
+
+.intersection-dot.empty:hover {
+    background-color: rgba(100, 100, 100, 0.5);
+}
+
+.intersection-dot.white {
+  background-color: white;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid #ccc;
+}
+
+.intersection-dot.black {
+  background-color: black;
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+  border: 1px solid #333;
+}

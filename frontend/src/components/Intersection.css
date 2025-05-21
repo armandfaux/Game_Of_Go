@@ -1,4 +1,3 @@
-/* The grid square */
 .intersection-cell {
   background-color: #d1d1d1;
   position: relative;
@@ -11,22 +10,32 @@
   box-sizing: border-box;
 }
 
+.intersection-cell.last-row {
+  background-color: #87addb;
+  border: 0px;
+}
+
+.intersection-cell.last-col {
+  background-color: #87addb;
+  border: 0px;
+}
+
 /* The circular hoverable button */
 .intersection-dot {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   background-color: transparent;
   border-radius: 50%;
   border: none;
   cursor: pointer;
   transition: background-color 0.2s ease;
   padding: 0;
-  margin-left: -15px;
-  margin-top: -15px;
+  margin-left: -14px;
+  margin-top: -14px;
 }
 
 .intersection-dot.empty:hover {
-    background-color: rgba(100, 100, 100, 0.5);
+    background-color: rgba(110, 110, 110, 0.5);
 }
 
 .intersection-dot.white {

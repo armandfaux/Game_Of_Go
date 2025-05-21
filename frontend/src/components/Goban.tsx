@@ -56,6 +56,8 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, size = 19 }) => {
           socket={socket}
           roomId={roomId}
           state={board[x][y] || 'empty'} // default fallback
+          isLastRow={y === size - 1}
+          isLastCol={x === size - 1}
         />
       );
     }

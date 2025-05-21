@@ -4,7 +4,8 @@
   grid-template-rows: repeat(var(--size), 32px);
   background-color: #87addb;
   border: 2px solid #3e3e3e;
-  padding: 22px;
+  padding-top: 32px;
+  padding-left: 32px;
   width: fit-content;
   position: relative;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);

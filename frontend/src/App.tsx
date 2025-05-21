@@ -16,7 +16,7 @@ function App() {
     currentPlayer: string;
   } | null>(null);
   const [board, setBoard] = useState<number[][]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
+  const [currentPlayer, setCurrentPlayer] = useState<string>('black');
 
   useEffect(() => {
     const socketInstance = io('http://127.0.0.1:3001');
@@ -45,11 +45,16 @@ function App() {
     socketRef.current.on('joinedRoom', (data: { roomId: string; boardSize: number, currentPlayer: string }) => {
       console.log('[EVENT] Joined room:', data);
       setRoomInfo(data);
+      setCurrentPlayer(data.currentPlayer);
     });
 
     socketRef.current.on('gameStarted', (data: { board: number[][]; currentPlayer: string }) => {
       console.log('[EVENT] Game started ! ', data);
-      setBoard(data.board);
+      setBoard(data.board); // useless ?
+      setCurrentPlayer(data.currentPlayer);
+    });
+
+    socketRef.current.on('moveMade', (data: { currentPlayer: string }) => {
       setCurrentPlayer(data.currentPlayer);
     });
 
@@ -68,7 +73,7 @@ function App() {
       )}
       {roomInfo && (
         <div className="top-right">
-          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} currentPlayer={roomInfo.currentPlayer} />
+          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} currentPlayer={currentPlayer} />
           <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
       )}

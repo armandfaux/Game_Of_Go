@@ -33,7 +33,12 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
-    client.emit('roomCreated', { roomId: room.id, roomSize: boardSize, currentPlayer: room.currentPlayer });
+    client.emit('roomCreated', { 
+      roomId: room.id,
+      roomSize: boardSize,
+      currentPlayer: room.currentPlayer,
+      gameState: room.state
+    });
     console.log('Creating room with id:', room.id, 'and size:', boardSize);
   }
 
@@ -52,13 +57,18 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     client.join(roomId);
-    client.emit('joinedRoom', { roomId, players: room.boardSize });
+    client.emit('joinedRoom', { 
+      roomId,
+      players: room.boardSize,
+      currentPlayer: room.currentPlayer
+    });
 
     // Notify all players in the room
     this.server.to(roomId).emit('playerJoined', { 
       playerId: client.id,
       playerCount: room.players.length,
       currentPlayer: room.currentPlayer,
+      gameState: room.state,
     });
   }
 
@@ -76,7 +86,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     this.server.to(roomId).emit('gameStarted', {
       board: room.board,
-      currentPlayer: room.currentPlayer
+      currentPlayer: room.currentPlayer,
+      gameState: room.state,
     });
   }
 

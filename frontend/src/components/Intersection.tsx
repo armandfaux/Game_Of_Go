@@ -10,11 +10,11 @@ interface IntersectionProps {
   isLastRow: boolean;
   isLastCol: boolean;
   isLastMove: boolean;
+  hasStar: boolean;
 }
 
-const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, state, isLastRow, isLastCol, isLastMove }) => {
+const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, state, isLastRow, isLastCol, isLastMove, hasStar }) => {
   const handleClick = () => {
-    console.log(`Clicked on: ${position.x}, ${position.y}`);
     socket.emit('makeMove', {roomId, position});
   };
 
@@ -22,6 +22,7 @@ const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, s
 
   return (
     <div className={cellClass}>
+      {hasStar && <div className="star-point" />}
       <button
         className={`intersection-dot ${state} ${isLastMove ? 'last-move' : ''}`}
         onClick={handleClick}

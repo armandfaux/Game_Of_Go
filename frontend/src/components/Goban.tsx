@@ -23,21 +23,23 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, size = 19 }) => {
   const [board, setBoard] = useState<Stone[][]>(
     Array(size).fill(null).map(() => Array(size).fill('empty'))
   );
+  const [lastMove, setLastMove] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const handleMoveMade = (data: MoveMadePayload) => {
-  console.log('Move made:', data);
-  if (data.board) {
-    // Convert server board from number[][] to Stone[][]
-    const convertedBoard: Stone[][] = data.board.map(row =>
-      row.map(value => {
-        if (value === 1) return 'black';
-        if (value === 2) return 'white';
-        return 'empty';
-      })
-    );
-    setBoard(convertedBoard);
-  }
+    console.log('Move made:', data);
+    if (data.board) {
+      // Convert server board from number[][] to Stone[][]
+      const convertedBoard: Stone[][] = data.board.map(row =>
+        row.map(value => {
+          if (value === 1) return 'black';
+          if (value === 2) return 'white';
+          return 'empty';
+        })
+      );
+      setBoard(convertedBoard);
+      setLastMove(data.position);
+    }
 };
 
     socket.on('moveMade', handleMoveMade);
@@ -58,6 +60,7 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, size = 19 }) => {
           state={board[x][y] || 'empty'} // default fallback
           isLastRow={y === size - 1}
           isLastCol={x === size - 1}
+          isLastMove={lastMove?.x === x && lastMove?.y === y}
         />
       );
     }

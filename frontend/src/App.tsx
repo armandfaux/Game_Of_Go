@@ -10,7 +10,11 @@ import StartGame from './components/StartGame';
 function App() {
   const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [roomInfo, setRoomInfo] = useState<{ roomId: string; boardSize: number } | null>(null);
+  const [roomInfo, setRoomInfo] = useState<{ 
+    roomId: string;
+    boardSize: number;
+    currentPlayer: string;
+  } | null>(null);
   const [board, setBoard] = useState<number[][]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<string | null>(null);
 
@@ -33,12 +37,12 @@ function App() {
     });
 
     // Room events
-    socketInstance.on('roomCreated', (data: { roomId: string; boardSize: number }) => {
+    socketInstance.on('roomCreated', (data: { roomId: string; boardSize: number, currentPlayer: string }) => {
       console.log('[EVENT] Room created by server:', data);
       setRoomInfo(data);
     });
 
-    socketRef.current.on('joinedRoom', (data: { roomId: string; boardSize: number }) => {
+    socketRef.current.on('joinedRoom', (data: { roomId: string; boardSize: number, currentPlayer: string }) => {
       console.log('[EVENT] Joined room:', data);
       setRoomInfo(data);
     });
@@ -64,7 +68,7 @@ function App() {
       )}
       {roomInfo && (
         <div className="top-right">
-          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} />
+          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} currentPlayer={roomInfo.currentPlayer} />
           <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
       )}

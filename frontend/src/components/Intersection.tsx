@@ -9,9 +9,10 @@ interface IntersectionProps {
   state: 'empty' | 'black' | 'white';
   isLastRow: boolean;
   isLastCol: boolean;
+  isLastMove: boolean;
 }
 
-const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, state, isLastRow, isLastCol }) => {
+const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, state, isLastRow, isLastCol, isLastMove }) => {
   const handleClick = () => {
     console.log(`Clicked on: ${position.x}, ${position.y}`);
     socket.emit('makeMove', {roomId, position});
@@ -21,7 +22,10 @@ const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, s
 
   return (
     <div className={cellClass}>
-    <button className={`intersection-dot ${state}`} onClick={handleClick}/>
+      <button
+        className={`intersection-dot ${state} ${isLastMove ? 'last-move' : ''}`}
+        onClick={handleClick}
+      />
     </div>
   );
 };

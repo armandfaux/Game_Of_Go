@@ -28,7 +28,7 @@
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.25s ease;
   padding: 0;
   margin-left: -14px;
   margin-top: -14px;
@@ -48,4 +48,8 @@
   background-color: black;
   box-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
   border: 1px solid #333;
+}
+
+.intersection-dot.last-move {
+  box-shadow: 0 0 4px 3px rgb(255, 179, 0);
 }

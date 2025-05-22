@@ -25,7 +25,7 @@ frontend/yarn-error.log*
 # compiled output
 backend/dist
 backend/node_modules
-backend/build
+# backend/build
 
 # Logs
 backend/logs

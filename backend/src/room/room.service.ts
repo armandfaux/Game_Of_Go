@@ -105,6 +105,50 @@ export class RoomService {
         return newRoom;
     }
 
+    addPlayerToRoom(roomId: string, playerId: string): boolean {
+        const room = this.getRoom(roomId);
+        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.state === 'waiting') {
+
+            // Remove player from other rooms
+            this.rooms.forEach((otherRoom) => {
+                if (otherRoom.players.includes(playerId)) {
+                    this.removePlayerFromRoom(otherRoom.id, playerId);
+                }
+            });
+
+            room.players.push(playerId);
+            return true;
+        }
+        return false;
+    }
+
+    removePlayerFromRoom(roomId: string, playerId: string): boolean {
+        const room = this.getRoom(roomId);
+        if (room) {
+            const index = room.players.indexOf(playerId);
+            if (index !== -1) {
+                room.players.splice(index, 1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private initializedBoard(size: number): number[][] {
+        return Array(size).fill(0).map(() => Array(size).fill(0));
+    }
+
+    startGame(roomId: string): boolean {
+        const room = this.getRoom(roomId);
+        if (room && room.state === 'waiting' && room.players.length > 1 ) {
+            console.log('Starting game in room:', roomId);
+            room.state = 'playing';
+            room.board = this.initializedBoard(room.boardSize);
+            return true;
+        }
+        return false;
+    }
+
     private calculateInitialHash(boardSize: number): bigint {
         let hash = 0n;
         for (let x = 0; x < boardSize; x++) {

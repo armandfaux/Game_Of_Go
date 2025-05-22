@@ -6,7 +6,7 @@ import { Socket } from 'socket.io-client';
 interface GobanProps {
   socket: Socket;
   roomId: string;
-  size?: number; // Default to 19x19
+  size: number;
 }
 
 type Stone = 'empty' | 'black' | 'white';
@@ -58,8 +58,7 @@ function getStarPoints(size: number): { x: number; y: number }[] {
   ];
 }
 
-
-const Goban: React.FC<GobanProps> = ({ socket, roomId, size = 19 }) => {
+const Goban: React.FC<GobanProps> = ({ socket, roomId, size }) => {
   const [board, setBoard] = useState<Stone[][]>(
     Array(size).fill(null).map(() => Array(size).fill('empty'))
   );

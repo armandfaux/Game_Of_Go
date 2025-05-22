@@ -28,18 +28,18 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('createRoom')
-  handleCreateRoom(client: Socket, roomSize: number, boardSize: number) {
-    const room = this.roomService.createRoom(roomSize, boardSize);
+  handleCreateRoom(client: Socket, payload: { roomSize: number; boardSize: number }) {
+    const room = this.roomService.createRoom(payload.roomSize, payload.boardSize);
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
     client.emit('roomCreated', { 
       roomId: room.id,
-      roomSize: boardSize,
+      boardSize: payload.boardSize,
       currentPlayer: room.currentPlayer,
       gameState: room.state
     });
-    console.log('Creating room with id:', room.id, 'and size:', boardSize);
+    console.log('Creating room with id:', room.id, 'and size:', payload.boardSize);
   }
 
   @SubscribeMessage('joinRoom')
@@ -59,7 +59,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client.join(roomId);
     client.emit('joinedRoom', { 
       roomId,
-      players: room.boardSize,
+      boardSize: room.boardSize,
       currentPlayer: room.currentPlayer
     });
 

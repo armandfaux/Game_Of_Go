@@ -45,7 +45,7 @@ function App() {
       boardSize: number,
       currentPlayer: string,
     }) => {
-      console.log(`[EVENT] Room ${data.roomId} created`);
+      console.log(`[EVENT] Room ${data.roomId} created, size : ${data.boardSize}`);
       setRoomInfo(data);
     });
 

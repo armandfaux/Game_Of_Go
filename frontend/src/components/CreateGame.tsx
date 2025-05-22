@@ -8,7 +8,7 @@ interface CreateGameProps {
 const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
   const handleCreateRoom = () => {
     if (socket) {
-      socket.emit('createRoom', 2, 19);
+      socket.emit('createRoom', {roomSize: 2, boardSize: 19});
     } else {
       console.warn('Socket not connected');
     }

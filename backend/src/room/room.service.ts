@@ -45,7 +45,6 @@ export class RoomService {
         this.initializeZobristTable(19);
     }
 
-    // Optimized Zobrist table initialization
     private initializeZobristTable(maxSize: number): void {
         this.zobristTable = new Array(maxSize);
         for (let x = 0; x < maxSize; x++) {
@@ -65,6 +64,16 @@ export class RoomService {
             .update(`x${x}y${y}s${state}`)
             .digest('hex');
         return BigInt(`0x${hash.substring(0, 16)}`);
+    }
+
+    private calculateInitialHash(boardSize: number): bigint {
+        let hash = 0n;
+        for (let x = 0; x < boardSize; x++) {
+            for (let y = 0; y < boardSize; y++) {
+                hash ^= this.zobristTable[x][y][0];
+            }
+        }
+        return hash;
     }
 
     private generateRoomId(): string {
@@ -149,16 +158,6 @@ export class RoomService {
         return false;
     }
 
-    private calculateInitialHash(boardSize: number): bigint {
-        let hash = 0n;
-        for (let x = 0; x < boardSize; x++) {
-            for (let y = 0; y < boardSize; y++) {
-                hash ^= this.zobristTable[x][y][0];
-            }
-        }
-        return hash;
-    }
-
     positionHasLiberty(room: GameRoom, position: Position, color: 'black' | 'white', checkedPositions: Position[]): boolean {
         checkedPositions.push(position);
 
@@ -214,7 +213,6 @@ export class RoomService {
         return false;
     }
 
-    // Optimized makeMove
     makeMove(roomId: string, playerId: string, position: Position): boolean {
         const room = this.rooms.get(roomId);
         if (!room || room.state !== 'playing') return false;
@@ -247,7 +245,7 @@ export class RoomService {
         let newHash = room.zobristHash;
         newHash ^= this.zobristTable[position.x][position.y][0];
         newHash ^= this.zobristTable[position.x][position.y][stoneValue];
-        
+
         for (const pos of capturedStones) {
             const capturedValue = moveColor === 'black' ? 2 : 1;
             newHash ^= this.zobristTable[pos.x][pos.y][capturedValue];

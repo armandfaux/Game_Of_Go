@@ -35,50 +35,36 @@ interface GameRoom {
 
 @Injectable()
 export class RoomService {
-    private rooms: Map<string, GameRoom> = new Map();
-    private directions = [
-        { x: -1, y: 0 }, // Up
-        { x: 1, y: 0 }, // Down
-        { x: 0, y: -1 }, // Left
-        { x: 0, y: 1 }  // Right
+    private readonly rooms = new Map<string, GameRoom>();
+    private readonly directions = [
+        { x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }
     ];
-
     private zobristTable: { [state: number]: bigint }[][];
 
     constructor() {
-        // Initialize with maximum expected board size (19x19)
         this.initializeZobristTable(19);
     }
 
+    // Optimized Zobrist table initialization
     private initializeZobristTable(maxSize: number): void {
-    this.zobristTable = Array(maxSize)
-        .fill(null)
-        .map((_, x) => 
-            Array(maxSize)
-            .fill(null)
-            .map((_, y) => ({
-                0: this.generateZobristHash(x, y, 0),
-                1: this.generateZobristHash(x, y, 1),
-                2: this.generateZobristHash(x, y, 2)
-            }))
-        );
-}
+        this.zobristTable = new Array(maxSize);
+        for (let x = 0; x < maxSize; x++) {
+            this.zobristTable[x] = new Array(maxSize);
+            for (let y = 0; y < maxSize; y++) {
+                this.zobristTable[x][y] = {
+                    0: this.generateZobristHash(x, y, 0),
+                    1: this.generateZobristHash(x, y, 1),
+                    2: this.generateZobristHash(x, y, 2)
+                };
+            }
+        }
+    }
 
     private generateZobristHash(x: number, y: number, state: number): bigint {
         const hash = createHash('sha256')
             .update(`x${x}y${y}s${state}`)
             .digest('hex');
         return BigInt(`0x${hash.substring(0, 16)}`);
-    }
-
-    private calculateBoardHash(room: GameRoom): bigint {
-        let hash = 0n;
-        for (let x = 0; x < room.boardSize; x++) {
-            for (let y = 0; y < room.boardSize; y++) {
-                hash ^= this.zobristTable[x][y][room.board[x][y]];
-            }
-        }
-        return hash;
     }
 
     private generateRoomId(): string {
@@ -96,94 +82,37 @@ export class RoomService {
 
     createRoom(roomSize: number, boardSize: number): GameRoom {
         const roomId = this.generateRoomId();
-        const board = this.initializedBoard(boardSize);
+        const board = Array(boardSize).fill(null).map(() => new Array(boardSize).fill(0));
         
         const newRoom: GameRoom = {
             id: roomId,
-            roomSize: roomSize,
+            roomSize,
             players: [],
-            boardSize: boardSize,
-            board: board,
+            boardSize,
+            board,
             currentPlayer: 'black',
             prisoners: { black: 0, white: 0 },
             moveHistory: [],
             state: 'waiting',
             createdAt: new Date(),
-            koInfo: {
-                position: null,
-                restrictedPlayer: null
-            },
-            zobristHash: this.calculateBoardHash({ 
-                boardSize, 
-                board,
-                // Other required fields with dummy values
-                id: '',
-                roomSize: 0,
-                players: [],
-                currentPlayer: 'black',
-                prisoners: { black: 0, white: 0 },
-                moveHistory: [],
-                state: 'waiting',
-                createdAt: new Date(),
-                koInfo: { position: null, restrictedPlayer: null },
-                previousHashes: new Set(),
-                zobristHash: 0n
-            }),
+            koInfo: { position: null, restrictedPlayer: null },
+            zobristHash: this.calculateInitialHash(boardSize),
             previousHashes: new Set()
         };
 
-        // Initialize with empty board hash
         newRoom.previousHashes.add(newRoom.zobristHash);
         this.rooms.set(roomId, newRoom);
         return newRoom;
     }
 
-    getRoom(roomId: string): GameRoom | undefined {
-        return this.rooms.get(roomId);
-    }
-
-    addPlayerToRoom(roomId: string, playerId: string): boolean {
-        const room = this.getRoom(roomId);
-        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.state === 'waiting') {
-
-            // Remove player from other rooms
-            this.rooms.forEach((otherRoom) => {
-                if (otherRoom.players.includes(playerId)) {
-                    this.removePlayerFromRoom(otherRoom.id, playerId);
-                }
-            });
-
-            room.players.push(playerId);
-            return true;
-        }
-        return false;
-    }
-
-    removePlayerFromRoom(roomId: string, playerId: string): boolean {
-        const room = this.getRoom(roomId);
-        if (room) {
-            const index = room.players.indexOf(playerId);
-            if (index !== -1) {
-                room.players.splice(index, 1);
-                return true;
+    private calculateInitialHash(boardSize: number): bigint {
+        let hash = 0n;
+        for (let x = 0; x < boardSize; x++) {
+            for (let y = 0; y < boardSize; y++) {
+                hash ^= this.zobristTable[x][y][0];
             }
         }
-        return false;
-    }
-
-    private initializedBoard(size: number): number[][] {
-        return Array(size).fill(0).map(() => Array(size).fill(0));
-    }
-
-    startGame(roomId: string): boolean {
-        const room = this.getRoom(roomId);
-        if (room && room.state === 'waiting' && room.players.length > 1 ) {
-            console.log('Starting game in room:', roomId);
-            room.state = 'playing';
-            room.board = this.initializedBoard(room.boardSize);
-            return true;
-        }
-        return false;
+        return hash;
     }
 
     positionHasLiberty(room: GameRoom, position: Position, color: 'black' | 'white', checkedPositions: Position[]): boolean {
@@ -209,58 +138,41 @@ export class RoomService {
         return false; // No liberties found
     }
 
+    // Optimized move validation
     isLegalMove(room: GameRoom, position: Position): boolean {
-        if (room.board[position.x][position.y] !== 0) return false;
-
-        // Out of bounds check
-        if (position.x < 0 || position.x >= room.boardSize || position.y < 0 || position.y >= room.boardSize) return false;
-
-        if (!this.positionHasLiberty(room, position, room.currentPlayer, [])) {
-            // check if the move captures, then it's legal
-
-            for (const dir of this.directions) {
-                const newX = position.x + dir.x;
-                const newY = position.y + dir.y;
-
-                if (newX >= 0 && newX < room.boardSize && newY >= 0 && newY < room.boardSize) {
-                    if (!this.positionHasLiberty(room, {x: newX, y: newY}, room.currentPlayer == 'white' ? 'black' : 'white', [position])) {
-                        return true;
-                    }
-                }
-            }
-
+        // Early exits for invalid positions
+        if (position.x < 0 || position.x >= room.boardSize || 
+            position.y < 0 || position.y >= room.boardSize || 
+            room.board[position.x][position.y] !== 0) {
             return false;
         }
 
-        return true;
+        const hasLiberty = this.positionHasLiberty(room, position, room.currentPlayer, []);
+        if (hasLiberty) return true;
+
+        // Only check captures if no immediate liberty
+        return this.checkPotentialCaptures(room, position);
     }
 
-    checkCaptures(room: GameRoom, position: Position, moveColor: 'black' | 'white', checkedPositions: Position[]): Position[] {
-        checkedPositions.push(position);
-
-        // Try adjacent valid positions
+    private checkPotentialCaptures(room: GameRoom, position: Position): boolean {
+        const opponent = room.currentPlayer === 'black' ? 2 : 1;
+        
         for (const dir of this.directions) {
-            const newX = position.x + dir.x;
-            const newY = position.y + dir.y;
-
-            if (newX >= 0 && newX < room.boardSize && newY >= 0 && newY < room.boardSize &&
-                !checkedPositions.some(pos => pos.x === newX && pos.y === newY))
-            {
-                const adjacentPosition: Position = { x: newX, y: newY };
-                checkedPositions.push(adjacentPosition);
-                if (room.board[newX][newY] === (moveColor === 'black' ? 2 : 1)) {
-                    // Check if the adjacent stone has liberties
-                    this.checkCaptures(room, adjacentPosition, moveColor, checkedPositions);
-                }
+            const x = position.x + dir.x;
+            const y = position.y + dir.y;
+            
+            if (x >= 0 && x < room.boardSize && y >= 0 && y < room.boardSize && 
+                room.board[x][y] === opponent && 
+                !this.positionHasLiberty(room, {x, y}, room.currentPlayer === 'black' ? 'white' : 'black', [position])) {
+                return true;
             }
         }
-
-        return checkedPositions;
+        return false;
     }
 
+    // Optimized makeMove
     makeMove(roomId: string, playerId: string, position: Position): boolean {
-        // Error handling
-        const room = this.getRoom(roomId);
+        const room = this.rooms.get(roomId);
         if (!room || room.state !== 'playing') return false;
 
         const playerIndex = room.players.indexOf(playerId);
@@ -270,87 +182,117 @@ export class RoomService {
         if (room.currentPlayer !== moveColor) return false;
 
         // Check basic KO rule
-        if (room.koInfo.position && 
-            room.koInfo.position.x === position.x && 
-            room.koInfo.position.y === position.y && 
-            room.koInfo.restrictedPlayer === moveColor) {
+        const { koInfo } = room;
+        if (koInfo.position?.x === position.x && 
+            koInfo.position?.y === position.y && 
+            koInfo.restrictedPlayer === moveColor) {
             return false;
         }
 
         if (!this.isLegalMove(room, position)) return false;
 
-        // Clone current board for simulation
+        // Clone board and prepare move
         const newBoard = room.board.map(row => [...row]);
         const stoneValue = moveColor === 'black' ? 1 : 2;
         newBoard[position.x][position.y] = stoneValue;
 
         // Process captures
-        let capturedStones: Position[] = [];
-        for (const dir of this.directions) {
-            const newX = position.x + dir.x;
-            const newY = position.y + dir.y;
-
-            if (newX >= 0 && newX < room.boardSize && newY >= 0 && newY < room.boardSize) {
-                const adjacentPosition: Position = { x: newX, y: newY };
-                const checkedPositions = this.checkCaptures(
-                    { ...room, board: newBoard }, 
-                    adjacentPosition, 
-                    moveColor, 
-                    [position]
-                );
-
-                if (!checkedPositions.some(pos => newBoard[pos.x][pos.y] === 0)) {
-                    for (const pos of checkedPositions) {
-                        if (newBoard[pos.x][pos.y] !== stoneValue) {
-                            newBoard[pos.x][pos.y] = 0;
-                            capturedStones.push(pos);
-                        }
-                    }
-                }
-            }
-        }
+        const capturedStones = this.processCaptures(room, newBoard, position, moveColor);
 
         // Calculate new hash
         let newHash = room.zobristHash;
-        newHash ^= this.zobristTable[position.x][position.y][0]; // Remove empty
-        newHash ^= this.zobristTable[position.x][position.y][stoneValue]; // Add stone
+        newHash ^= this.zobristTable[position.x][position.y][0];
+        newHash ^= this.zobristTable[position.x][position.y][stoneValue];
         
-        // Update hash for captured stones
         for (const pos of capturedStones) {
             const capturedValue = moveColor === 'black' ? 2 : 1;
-            newHash ^= this.zobristTable[pos.x][pos.y][capturedValue]; // Remove captured
-            newHash ^= this.zobristTable[pos.x][pos.y][0]; // Add empty
+            newHash ^= this.zobristTable[pos.x][pos.y][capturedValue];
+            newHash ^= this.zobristTable[pos.x][pos.y][0];
         }
 
-        // Check superko (positional repetition)
-        if (room.previousHashes.has(newHash)) {
-            return false;
-        }
+        // Check superko
+        if (room.previousHashes.has(newHash)) return false;
 
         // Update game state
         room.board = newBoard;
         room.prisoners[moveColor === 'black' ? 'white' : 'black'] += capturedStones.length;
-        room.moveHistory.push({
-            playerId: playerId,
-            position: position,
-            color: moveColor
-        });
+        room.moveHistory.push({ playerId, position, color: moveColor });
         room.currentPlayer = moveColor === 'black' ? 'white' : 'black';
         
         // Update KO info
-        room.koInfo = capturedStones.length === 1 ? {
-            position: capturedStones[0],
-            restrictedPlayer: moveColor
-        } : {
-            position: null,
-            restrictedPlayer: null
-        };
+        room.koInfo = capturedStones.length === 1 
+            ? { position: capturedStones[0], restrictedPlayer: moveColor }
+            : { position: null, restrictedPlayer: null };
 
         // Update hashes
         room.previousHashes.add(newHash);
         room.zobristHash = newHash;
 
         return true;
+    }
+
+    private processCaptures(room: GameRoom, board: number[][], position: Position, moveColor: 'black' | 'white'): Position[] {
+        const capturedStones: Position[] = [];
+        const opponent = moveColor === 'black' ? 2 : 1;
+
+        for (const dir of this.directions) {
+            const x = position.x + dir.x;
+            const y = position.y + dir.y;
+            
+            if (x >= 0 && x < room.boardSize && y >= 0 && y < room.boardSize && board[x][y] === opponent) {
+                const group = this.findGroup(board, {x, y}, opponent, room.boardSize);
+                if (!group.some(pos => this.hasLiberty(board, pos, room.boardSize))) {
+                    for (const pos of group) {
+                        board[pos.x][pos.y] = 0;
+                        capturedStones.push(pos);
+                    }
+                }
+            }
+        }
+        return capturedStones;
+    }
+
+    private findGroup(board: number[][], start: Position, color: number, boardSize: number): Position[] {
+        const group: Position[] = [];
+        const visited = new Set<string>();
+        const stack = [start];
+        
+        while (stack.length > 0) {
+            const current = stack.pop()!;
+            const key = `${current.x},${current.y}`;
+            
+            if (visited.has(key)) continue;
+            visited.add(key);
+            group.push(current);
+            
+            for (const dir of this.directions) {
+                const x = current.x + dir.x;
+                const y = current.y + dir.y;
+                
+                if (x >= 0 && x < boardSize && y >= 0 && y < boardSize && 
+                    board[x][y] === color && 
+                    !visited.has(`${x},${y}`)) {
+                    stack.push({x, y});
+                }
+            }
+        }
+        return group;
+    }
+
+    private hasLiberty(board: number[][], position: Position, boardSize: number): boolean {
+        for (const dir of this.directions) {
+            const x = position.x + dir.x;
+            const y = position.y + dir.y;
+            
+            if (x >= 0 && x < boardSize && y >= 0 && y < boardSize && board[x][y] === 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getRoom(roomId: string): GameRoom | undefined {
+        return this.rooms.get(roomId);
     }
 
     displayRooms(): void {

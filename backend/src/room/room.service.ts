@@ -15,7 +15,8 @@ interface Move {
 
 interface GameRoom {
     id: string;
-    players: string[]; // Socket IDs or user IDs
+    roomSize: number;
+    players: string[];
     boardSize: number;
     board: number[][]; // 0 = empty, 1 = black, 2 = white
     currentPlayer: 'black' | 'white';
@@ -49,22 +50,22 @@ export class RoomService {
         return result;
     }
 
-    createRoom(size: number): GameRoom {
+    createRoom(roomSize: number, boardSize: number): GameRoom {
         const roomId = this.generateRoomId();
         const newRoom: GameRoom = {
             id: roomId,
+            roomSize: roomSize,
             players: [],
-            boardSize: size,
-            board: this.initializedBoard(size),
+            boardSize: boardSize,
+            board: this.initializedBoard(boardSize),
             currentPlayer: 'black',
             prisoners: { black: 0, white: 0 },
             moveHistory: [],
             state: 'waiting',
             createdAt: new Date()
         };
-        
+
         this.rooms.set(roomId, newRoom);
-        // this.displayRooms();
         return newRoom;
     }
 
@@ -74,7 +75,7 @@ export class RoomService {
 
     addPlayerToRoom(roomId: string, playerId: string): boolean {
         const room = this.getRoom(roomId);
-        if (room && !room.players.includes(playerId) && room.players.length < room.boardSize && room.state === 'waiting') {
+        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.state === 'waiting') {
 
             // Remove player from other rooms
             this.rooms.forEach((otherRoom) => {
@@ -84,7 +85,6 @@ export class RoomService {
             });
 
             room.players.push(playerId);
-            this.displayRooms();
             return true;
         }
         return false;
@@ -164,7 +164,6 @@ export class RoomService {
         }
 
         return true;
-
     }
 
     checkCaptures(room: GameRoom, position: Position, moveColor: 'black' | 'white', checkedPositions: Position[]): Position[] {
@@ -187,12 +186,6 @@ export class RoomService {
             }
         }
 
-        // for (const pos of checkedPositions) {
-        //     if (room.board[pos.x][pos.y] !== (moveColor === 'black' ? 1 : 2)) {
-        //         room.board[pos.x][pos.y] = 0;
-        //         room.prisoners[moveColor] += 1;
-        //     }
-        // }
         return checkedPositions;
     }
 
@@ -241,15 +234,13 @@ export class RoomService {
         });
         room.currentPlayer = expectedColor === 'black' ? 'white' : 'black';
 
-        this.displayRoomInfo(roomId);
-
         return true;
     }
 
     displayRooms(): void {
         console.log('Current Rooms:');
         this.rooms.forEach((room) => {
-            console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.boardSize}, State: ${room.state}`);
+            console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.roomSize}, State: ${room.state}`);
         });
     }
 

@@ -28,8 +28,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('createRoom')
-  handleCreateRoom(client: Socket, boardSize: number = 19) {
-    const room = this.roomService.createRoom(boardSize);
+  handleCreateRoom(client: Socket, roomSize: number, boardSize: number) {
+    const room = this.roomService.createRoom(roomSize, boardSize);
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);

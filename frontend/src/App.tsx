@@ -8,55 +8,70 @@ import RoomInfo from './components/RoomInfo';
 import StartGame from './components/StartGame';
 
 function App() {
-  const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [roomInfo, setRoomInfo] = useState<{ 
     roomId: string;
     boardSize: number;
+    board?: number[][];
     currentPlayer: string;
   } | null>(null);
-  const [board, setBoard] = useState<number[][]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<string>('black');
 
   useEffect(() => {
-    const socketInstance = io('ws://52.65.144.173:3001');
-    socketRef.current = socketInstance;
-    setSocket(socketInstance); // ← trigger re-render with the socket
+    console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
+    
+    // PRODUCTION
+    // const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:3001');
 
-    // Socket connection events
-    socketInstance.on('connect', () => {
-      console.log('Connected to server');
-    });
+    // DEVELOPMENT
+    const socketInstance = io('http://localhost:3001');
+
+    // Enable React auto rendering on socket events
+    setSocket(socketInstance);
+
+// Socket events listeners
+// ----------------------------------------------------------------------------------------------------------
 
     socketInstance.on('connected', () => {
       console.log('[SERVER] Connected to server');
     });
 
     socketInstance.on('connect_error', (error) => {
-      console.error('[Socket Connect Error]', error);
+      console.error('[ERROR]', error);
     });
 
-    // Room events
-    socketInstance.on('roomCreated', (data: { roomId: string; boardSize: number, currentPlayer: string }) => {
-      console.log('[EVENT] Room created by server:', data);
+    socketInstance.on('roomCreated', (data: { 
+      roomId: string;
+      boardSize: number,
+      currentPlayer: string,
+    }) => {
+      console.log(`[EVENT] Room ${data.roomId} created`);
       setRoomInfo(data);
     });
 
-    socketRef.current.on('joinedRoom', (data: { roomId: string; boardSize: number, currentPlayer: string }) => {
-      console.log('[EVENT] Joined room:', data);
+    socketInstance.on('joinedRoom', (data: {
+      roomId: string,
+      boardSize: number,
+      currentPlayer: string,
+    }) => {
+      console.log(`[EVENT] Room ${data.roomId} joined`);
       setRoomInfo(data);
       setCurrentPlayer(data.currentPlayer);
     });
 
-    socketRef.current.on('gameStarted', (data: { board: number[][]; currentPlayer: string }) => {
-      console.log('[EVENT] Game started ! ', data);
-      setBoard(data.board); // useless ?
+    socketInstance.on('gameStarted', (data: {
+      board: number[][];
+      currentPlayer: string
+    }) => {
+      console.log('[EVENT] Game started');
       setCurrentPlayer(data.currentPlayer);
     });
 
-    socketRef.current.on('moveMade', (data: { currentPlayer: string }) => {
+    socketInstance.on('moveMade', (data: { currentPlayer: string }) => {
       setCurrentPlayer(data.currentPlayer);
     });
+
+// ----------------------------------------------------------------------------------------------------------
 
     return () => {
       socketInstance.disconnect();
@@ -79,7 +94,7 @@ function App() {
       )}
       {currentPlayer && socket && roomInfo && (
         <div className="goban-container">
-          <Goban socket={socket} roomId={roomInfo.roomId}></Goban>
+          <Goban socket={socket} roomId={roomInfo.roomId} size={roomInfo.boardSize}></Goban>
         </div>
       )}
     </div>

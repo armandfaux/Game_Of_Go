@@ -19,7 +19,7 @@ function App() {
   const [currentPlayer, setCurrentPlayer] = useState<string>('black');
 
   useEffect(() => {
-    const socketInstance = io('https://217.160.190.125:3001');
+    const socketInstance = io('http://217.160.190.125:3001');
     socketRef.current = socketInstance;
     setSocket(socketInstance); // ← trigger re-render with the socket
 

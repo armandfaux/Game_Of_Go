@@ -83,16 +83,6 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       currentPlayer: room.currentPlayer,
       // gameState: room.state,
     });
-
-    // Notify all players in the room
-    // this.server.to(roomId).emit('playerJoined', {
-    //   roomId: roomId,
-    //   roomSize: room.roomSize,
-    //   boardSize: room.boardSize,
-    //   playerId: client.id,
-    //   playerCount: room.players.length,
-    //   currentPlayer: room.currentPlayer,
-    // });
   }
 
   @SubscribeMessage('startGame')

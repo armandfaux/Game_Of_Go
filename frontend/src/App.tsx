@@ -25,10 +25,10 @@ function App() {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
     
     // PRODUCTION
-    const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:3001');
+    // const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:3001');
 
     // DEVELOPMENT
-    // const socketInstance = io('http://localhost:3001');
+    const socketInstance = io('http://localhost:3001');
 
     // Enable React auto rendering on socket events
     setSocket(socketInstance);

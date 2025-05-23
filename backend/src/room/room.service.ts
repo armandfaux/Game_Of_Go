@@ -39,6 +39,10 @@ export class RoomService {
     private readonly directions = [
         { x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }
     ];
+
+    // -------------------------------------------
+    // -- Zobrist hashing for superko detection --
+    // -------------------------------------------
     private zobristTable: { [state: number]: bigint }[][];
 
     constructor() {
@@ -75,13 +79,14 @@ export class RoomService {
         }
         return hash;
     }
+    // -------------------------------------------
 
     private generateRoomId(): string {
         const length = 5;
         let result = '';
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const charactersLength = characters.length;
-        
+
         for (let i = 0; i < length; i++) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
@@ -92,7 +97,7 @@ export class RoomService {
     createRoom(roomSize: number, boardSize: number): GameRoom {
         const roomId = this.generateRoomId();
         const board = Array(boardSize).fill(null).map(() => new Array(boardSize).fill(0));
-        
+
         const newRoom: GameRoom = {
             id: roomId,
             roomSize,
@@ -115,7 +120,7 @@ export class RoomService {
     }
 
     addPlayerToRoom(roomId: string, playerId: string): boolean {
-        const room = this.getRoom(roomId);
+        const room = this.rooms.get(roomId);
         if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.state === 'waiting') {
 
             // Remove player from other rooms
@@ -132,7 +137,7 @@ export class RoomService {
     }
 
     removePlayerFromRoom(roomId: string, playerId: string): boolean {
-        const room = this.getRoom(roomId);
+        const room = this.rooms.get(roomId);
         if (room) {
             const index = room.players.indexOf(playerId);
             if (index !== -1) {
@@ -148,9 +153,8 @@ export class RoomService {
     }
 
     startGame(roomId: string): boolean {
-        const room = this.getRoom(roomId);
+        const room = this.rooms.get(roomId);
         if (room && room.state === 'waiting' && room.players.length > 1 ) {
-            console.log('Starting game in room:', roomId);
             room.state = 'playing';
             room.board = this.initializedBoard(room.boardSize);
             return true;
@@ -158,88 +162,47 @@ export class RoomService {
         return false;
     }
 
-    positionHasLiberty(room: GameRoom, position: Position, color: 'black' | 'white', checkedPositions: Position[]): boolean {
-        checkedPositions.push(position);
+    isValidMove(room: GameRoom, playerId: string, position: Position): boolean {
+        if (room.state !== 'playing') return false;
 
-        // Try adjacent valid positions
-        for (const dir of this.directions) {
-            const newX = position.x + dir.x;
-            const newY = position.y + dir.y;
+        // Check if the player is in the room
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1) return false;
 
-            if (newX >= 0 && newX < room.boardSize && newY >= 0 && newY < room.boardSize &&
-                // Avoid checking the same position again
-                !checkedPositions.some(pos => pos.x === newX && pos.y === newY))
-            {
-                if (room.board[newX][newY] === 0) return true;
-                if (room.board[newX][newY] === (color === 'black' ? 1 : 2)) {
-                    // Check if the adjacent stone has liberties
-                    const adjacentPosition: Position = { x: newX, y: newY };
-                    if (this.positionHasLiberty(room, adjacentPosition, color, checkedPositions)) return true;
-                }
-            }
-        }
-        return false; // No liberties found
-    }
+        // Check if it's the player's turn
+        const moveColor = (playerIndex === 0 ? 'black' : 'white');
+        if (room.currentPlayer !== moveColor) return false;
 
-    // Optimized move validation
-    isLegalMove(room: GameRoom, position: Position): boolean {
-        // Early exits for invalid positions
+        // Check bounds and if the position is empty
         if (position.x < 0 || position.x >= room.boardSize || 
             position.y < 0 || position.y >= room.boardSize || 
             room.board[position.x][position.y] !== 0) {
             return false;
         }
-
-        const hasLiberty = this.positionHasLiberty(room, position, room.currentPlayer, []);
-        if (hasLiberty) return true;
-
-        // Only check captures if no immediate liberty
-        return this.checkPotentialCaptures(room, position);
-    }
-
-    private checkPotentialCaptures(room: GameRoom, position: Position): boolean {
-        const opponent = room.currentPlayer === 'black' ? 2 : 1;
-        
-        for (const dir of this.directions) {
-            const x = position.x + dir.x;
-            const y = position.y + dir.y;
-            
-            if (x >= 0 && x < room.boardSize && y >= 0 && y < room.boardSize && 
-                room.board[x][y] === opponent && 
-                !this.positionHasLiberty(room, {x, y}, room.currentPlayer === 'black' ? 'white' : 'black', [position])) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 
     makeMove(roomId: string, playerId: string, position: Position): boolean {
         const room = this.rooms.get(roomId);
-        if (!room || room.state !== 'playing') return false;
 
-        const playerIndex = room.players.indexOf(playerId);
-        if (playerIndex === -1) return false;
-
-        const moveColor = playerIndex === 0 ? 'black' : 'white';
-        if (room.currentPlayer !== moveColor) return false;
-
-        // Check basic KO rule
-        const { koInfo } = room;
-        if (koInfo.position?.x === position.x && 
-            koInfo.position?.y === position.y && 
-            koInfo.restrictedPlayer === moveColor) {
-            return false;
-        }
-
-        if (!this.isLegalMove(room, position)) return false;
+        if (!room) return false;
+        if (!this.isValidMove(room, playerId, position)) return false;
 
         // Clone board and prepare move
         const newBoard = room.board.map(row => [...row]);
-        const stoneValue = moveColor === 'black' ? 1 : 2;
+        const moveColor = room.currentPlayer;
+        const stoneValue = (moveColor === 'black' ? 1 : 2);
         newBoard[position.x][position.y] = stoneValue;
 
         // Process captures
         const capturedStones = this.processCaptures(room, newBoard, position, moveColor);
+
+        if (capturedStones.length == 0) {
+            const group = this.findGroup(newBoard, position);
+            if(!group.some(pos => this.hasLiberty(newBoard, pos))) {
+                return false;
+            }
+        }
 
         // Calculate new hash
         let newHash = room.zobristHash;
@@ -260,7 +223,7 @@ export class RoomService {
         room.prisoners[moveColor] += capturedStones.length;
         room.moveHistory.push({ playerId, position, color: moveColor });
         room.currentPlayer = moveColor === 'black' ? 'white' : 'black';
-        
+
         // Update KO info
         room.koInfo = capturedStones.length === 1 
             ? { position: capturedStones[0], restrictedPlayer: moveColor }
@@ -280,10 +243,10 @@ export class RoomService {
         for (const dir of this.directions) {
             const x = position.x + dir.x;
             const y = position.y + dir.y;
-            
+
             if (x >= 0 && x < room.boardSize && y >= 0 && y < room.boardSize && board[x][y] === opponent) {
-                const group = this.findGroup(board, {x, y}, opponent, room.boardSize);
-                if (!group.some(pos => this.hasLiberty(board, pos, room.boardSize))) {
+                const group = this.findGroup(board, {x, y});
+                if (!group.some(pos => this.hasLiberty(board, pos))) {
                     for (const pos of group) {
                         board[pos.x][pos.y] = 0;
                         capturedStones.push(pos);
@@ -294,39 +257,49 @@ export class RoomService {
         return capturedStones;
     }
 
-    private findGroup(board: number[][], start: Position, color: number, boardSize: number): Position[] {
+    // Return the chain starting from the given position
+    private findGroup(board: number[][], start: Position): Position[] {
+        const color = board[start.x][start.y];
         const group: Position[] = [];
-        const visited = new Set<string>();
+        const visited: Position[] = [];
         const stack = [start];
-        
+
         while (stack.length > 0) {
             const current = stack.pop()!;
-            const key = `${current.x},${current.y}`;
-            
-            if (visited.has(key)) continue;
-            visited.add(key);
+
+            if (visited.some(pos => pos.x === current.x && pos.y === current.y)) continue;
+
+            visited.push(current);
             group.push(current);
-            
+
             for (const dir of this.directions) {
                 const x = current.x + dir.x;
                 const y = current.y + dir.y;
-                
-                if (x >= 0 && x < boardSize && y >= 0 && y < boardSize && 
-                    board[x][y] === color && 
-                    !visited.has(`${x},${y}`)) {
+
+                if (
+                    // Check bounds
+                    x >= 0 && x < board.length && y >= 0 && y < board[x].length &&
+
+                    // Check same color
+                    board[x][y] === color &&
+
+                    // Check not visited
+                    !visited.some(pos => pos.x === x && pos.y === y)
+                ) {
                     stack.push({x, y});
                 }
             }
         }
+
         return group;
     }
 
-    private hasLiberty(board: number[][], position: Position, boardSize: number): boolean {
+    private hasLiberty(board: number[][], position: Position): boolean {
         for (const dir of this.directions) {
             const x = position.x + dir.x;
             const y = position.y + dir.y;
-            
-            if (x >= 0 && x < boardSize && y >= 0 && y < boardSize && board[x][y] === 0) {
+
+            if (x >= 0 && x < board.length && y >= 0 && y < board[x].length && board[x][y] === 0) {
                 return true;
             }
         }
@@ -345,7 +318,7 @@ export class RoomService {
     }
 
     displayRoomInfo(roomId: string): void {
-        const room = this.getRoom(roomId);
+        const room = this.rooms.get(roomId);
         if (room) {
             console.log('---------------------------------------------------------');
             console.log(`Room ID:           ${room.id}`);

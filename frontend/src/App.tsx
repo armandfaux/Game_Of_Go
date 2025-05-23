@@ -107,11 +107,11 @@ function App() {
           <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
       )}
-      {currentPlayer && socket && roomInfo && (
+      {/* {currentPlayer && socket && roomInfo && (
         <div className="goban-container">
           <Goban socket={socket} roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} koPosition={koPosition}></Goban>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

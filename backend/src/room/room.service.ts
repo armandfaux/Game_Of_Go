@@ -257,7 +257,7 @@ export class RoomService {
 
         // Update game state
         room.board = newBoard;
-        room.prisoners[moveColor === 'black' ? 'white' : 'black'] += capturedStones.length;
+        room.prisoners[moveColor] += capturedStones.length;
         room.moveHistory.push({ playerId, position, color: moveColor });
         room.currentPlayer = moveColor === 'black' ? 'white' : 'black';
         

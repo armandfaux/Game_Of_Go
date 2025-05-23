@@ -113,7 +113,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const success = this.roomService.makeMove(
       payload.roomId,
       client.id,
-      payload.position
+      payload.position,
     );
     
     if (success) {

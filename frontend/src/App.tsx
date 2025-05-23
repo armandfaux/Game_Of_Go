@@ -16,6 +16,7 @@ function App() {
     currentPlayer: string;
   } | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<string>('black');
+  const [prisoners, setPrisoners] = useState<{ black: number; white: number }>({ black: 0, white: 0 });
 
   useEffect(() => {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
@@ -67,8 +68,9 @@ function App() {
       setCurrentPlayer(data.currentPlayer);
     });
 
-    socketInstance.on('moveMade', (data: { currentPlayer: string }) => {
+    socketInstance.on('moveMade', (data: { currentPlayer: string, prisoners: {black: number, white: number} }) => {
       setCurrentPlayer(data.currentPlayer);
+      setPrisoners(data.prisoners);
     });
 
 // ----------------------------------------------------------------------------------------------------------
@@ -88,7 +90,7 @@ function App() {
       )}
       {roomInfo && (
         <div className="top-right">
-          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} currentPlayer={currentPlayer} />
+          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} currentPlayer={currentPlayer} prisoners={prisoners} />
           <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
       )}

@@ -124,7 +124,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         color: expectedColor,
         currentPlayer: room.currentPlayer,
         board: room.board,
-        prisoners: room.prisoners
+        prisoners: room.prisoners,
+        koPosition: room.koInfo.position,
       });
     } else {
       client.emit('invalidMove', { position: payload.position });

@@ -17,6 +17,7 @@ function App() {
   } | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<string>('black');
   const [prisoners, setPrisoners] = useState<{ black: number; white: number }>({ black: 0, white: 0 });
+  const [koPosition, setKoPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
@@ -43,6 +44,7 @@ function App() {
 
     socketInstance.on('roomCreated', (data: { 
       roomId: string;
+
       boardSize: number,
       currentPlayer: string,
     }) => {
@@ -68,9 +70,15 @@ function App() {
       setCurrentPlayer(data.currentPlayer);
     });
 
-    socketInstance.on('moveMade', (data: { currentPlayer: string, prisoners: {black: number, white: number} }) => {
+    socketInstance.on('moveMade', (data: { 
+      currentPlayer: string,
+      prisoners: {black: number, white: number},
+      koPosition: {x: number, y: number}
+    }) => {
+      console.log('ko position', data.koPosition);
       setCurrentPlayer(data.currentPlayer);
       setPrisoners(data.prisoners);
+      setKoPosition(data.koPosition);
     });
 
 // ----------------------------------------------------------------------------------------------------------
@@ -96,7 +104,7 @@ function App() {
       )}
       {currentPlayer && socket && roomInfo && (
         <div className="goban-container">
-          <Goban socket={socket} roomId={roomInfo.roomId} size={roomInfo.boardSize}></Goban>
+          <Goban socket={socket} roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} koPosition={koPosition}></Goban>
         </div>
       )}
     </div>

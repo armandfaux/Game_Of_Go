@@ -56,6 +56,19 @@
   box-shadow: 0 0 4px 2px rgb(255, 179, 0);
 }
 
+.intersection-dot.ko {
+  box-shadow: 0 0 4px 2px rgb(255, 32, 32);
+}
+
+.ko-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 0.7em;
+  font-weight: bold;
+  color: rgb(255, 0, 0);
+  pointer-events: none;
+}
+
 .star-point {
   position: absolute;
   top: -1px;

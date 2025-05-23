@@ -11,9 +11,10 @@ interface IntersectionProps {
   isLastCol: boolean;
   isLastMove: boolean;
   hasStar: boolean;
+  isKo: boolean;
 }
 
-const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, state, isLastRow, isLastCol, isLastMove, hasStar }) => {
+const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, state, isLastRow, isLastCol, isLastMove, hasStar, isKo }) => {
   const handleClick = () => {
     socket.emit('makeMove', {roomId, position});
   };
@@ -24,9 +25,11 @@ const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, s
     <div className={cellClass}>
       {hasStar && <div className="star-point" />}
       <button
-        className={`intersection-dot ${state} ${isLastMove ? 'last-move' : ''}`}
+        className={`intersection-dot ${state} ${isLastMove ? 'last-move' : ''} ${isKo ? 'ko' : ''}`}
         onClick={handleClick}
-      />
+      >
+        {/* {isKo && <span className="ko-label">KO</span>} */}
+      </button>
     </div>
   );
 };

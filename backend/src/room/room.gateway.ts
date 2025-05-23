@@ -116,8 +116,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return client.emit('error', { message: 'You are not in this game' });
     }
     
-    const expectedColor = playerIndex === 0 ? 'black' : 'white';
-    if (room.currentPlayer !== expectedColor) {
+    if (room.currentPlayer !== playerIndex + 1) {
       return client.emit('error', { message: 'Not your turn' });
     }
     
@@ -133,7 +132,6 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Broadcast updated game state to all in room
       this.server.to(payload.roomId).emit('moveMade', {
         position: payload.position,
-        color: expectedColor,
         currentPlayer: room.currentPlayer,
         board: room.board,
         prisoners: room.prisoners,

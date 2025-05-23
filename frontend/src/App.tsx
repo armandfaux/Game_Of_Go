@@ -15,10 +15,10 @@ function App() {
     players?: string[];
     boardSize: number;
     board?: number[][];
-    currentPlayer: string;
+    currentPlayer: number;
   } | null>(null);
-  const [currentPlayer, setCurrentPlayer] = useState<string>('black');
-  const [prisoners, setPrisoners] = useState<{ black: number; white: number }>({ black: 0, white: 0 });
+  const [currentPlayer, setCurrentPlayer] = useState<number>(1);
+  const [prisoners, setPrisoners] = useState<number[]>([0, 0, 0, 0]);
   const [koPosition, setKoPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function App() {
       roomSize: number,
       players: string[];
       boardSize: number,
-      currentPlayer: string,
+      currentPlayer: number,
     }) => {
       console.log(`[EVENT] Room ${data.roomId} created with size ${data.boardSize}`);
       setRoomInfo(data);
@@ -61,7 +61,7 @@ function App() {
       roomSize: number,
       players: string[];
       boardSize: number,
-      currentPlayer: string,
+      currentPlayer: number,
     }) => {
       console.log(`[EVENT] Player ${data.playerId} joined room ${data.roomId}`);
       setRoomInfo(data);
@@ -70,15 +70,15 @@ function App() {
 
     socketInstance.on('gameStarted', (data: {
       board: number[][];
-      currentPlayer: string
+      currentPlayer: number
     }) => {
       console.log('[EVENT] Game started');
       setCurrentPlayer(data.currentPlayer);
     });
 
     socketInstance.on('moveMade', (data: { 
-      currentPlayer: string,
-      prisoners: {black: number, white: number},
+      currentPlayer: number,
+      prisoners: number[],
       koPosition: {x: number, y: number}
     }) => {
       setCurrentPlayer(data.currentPlayer);
@@ -108,7 +108,7 @@ function App() {
             players={roomInfo.players || []}
             roomSize={roomInfo.roomSize}
             boardSize={roomInfo.boardSize}
-            currentPlayer={currentPlayer}
+            currentPlayer={currentPlayer === 1 ? 'Black' : 'White'}
             prisoners={prisoners}
           />
           <StartGame socket={socket} roomId={roomInfo.roomId} />

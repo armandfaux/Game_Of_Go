@@ -10,7 +10,7 @@ interface GobanProps {
   koPosition: { x: number; y: number } | null;
 }
 
-type Stone = 'empty' | 'black' | 'white';
+type Stone = 'empty' | 'black' | 'white' | 'green' | 'purple';
 
 interface MoveMadePayload {
   position: { x: number; y: number };
@@ -75,6 +75,8 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, boardSize, koPosition }) 
         row.map(value => {
           if (value === 1) return 'black';
           if (value === 2) return 'white';
+          if (value === 3) return 'green';
+          if (value === 4) return 'purple';
           return 'empty';
         })
       );

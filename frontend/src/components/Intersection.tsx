@@ -6,7 +6,7 @@ interface IntersectionProps {
   position: { x: number; y: number };
   socket: Socket;
   roomId: string;
-  state: 'empty' | 'black' | 'white';
+  state: 'empty' | 'black' | 'white' | 'green' | 'purple';
   isLastRow: boolean;
   isLastCol: boolean;
   isLastMove: boolean;

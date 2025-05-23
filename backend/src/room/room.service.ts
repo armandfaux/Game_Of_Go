@@ -11,7 +11,12 @@ export interface Position {
 interface Move {
     playerId: string;
     position: Position;
-    color: 'black' | 'white';
+    color: number;
+}
+
+interface Player {
+    id: string;
+    color: number;
 }
 
 interface GameRoom {
@@ -20,14 +25,14 @@ interface GameRoom {
     players: string[];
     boardSize: number;
     board: number[][]; // 0 = empty, 1 = black, 2 = white
-    currentPlayer: 'black' | 'white';
-    prisoners: { black: number; white: number };
+    currentPlayer: number;
+    prisoners: number[];
     moveHistory: Move[];
     state: GameState;
     createdAt: Date;
     koInfo: {
         position: Position | null;
-        restrictedPlayer: 'black' | 'white' | null;
+        restrictedPlayer: number | null;
     };
     zobristHash: bigint;
     previousHashes: Set<bigint>;
@@ -57,7 +62,9 @@ export class RoomService {
                 this.zobristTable[x][y] = {
                     0: this.generateZobristHash(x, y, 0),
                     1: this.generateZobristHash(x, y, 1),
-                    2: this.generateZobristHash(x, y, 2)
+                    2: this.generateZobristHash(x, y, 2),
+                    3: this.generateZobristHash(x, y, 3),
+                    4: this.generateZobristHash(x, y, 4),
                 };
             }
         }
@@ -104,8 +111,8 @@ export class RoomService {
             players: [],
             boardSize,
             board,
-            currentPlayer: 'black',
-            prisoners: { black: 0, white: 0 },
+            currentPlayer: 1,
+            prisoners: new Array(roomSize).fill(0),
             moveHistory: [],
             state: 'waiting',
             createdAt: new Date(),
@@ -154,7 +161,7 @@ export class RoomService {
 
     startGame(roomId: string): boolean {
         const room = this.rooms.get(roomId);
-        if (room && room.state === 'waiting' && room.players.length > 1 ) {
+        if (room && room.state === 'waiting' && room.players.length === room.roomSize) {
             room.state = 'playing';
             room.board = this.initializedBoard(room.boardSize);
             return true;
@@ -170,8 +177,7 @@ export class RoomService {
         if (playerIndex === -1) return false;
 
         // Check if it's the player's turn
-        const moveColor = (playerIndex === 0 ? 'black' : 'white');
-        if (room.currentPlayer !== moveColor) return false;
+        if (room.currentPlayer !== playerIndex + 1) return false;
 
         // Check bounds and if the position is empty
         if (position.x < 0 || position.x >= room.boardSize || 
@@ -191,11 +197,11 @@ export class RoomService {
         // Clone board and prepare move
         const newBoard = room.board.map(row => [...row]);
         const moveColor = room.currentPlayer;
-        const stoneValue = (moveColor === 'black' ? 1 : 2);
-        newBoard[position.x][position.y] = stoneValue;
+        // const stoneValue = (moveColor === 'black' ? 1 : 2);
+        newBoard[position.x][position.y] = moveColor;
 
         // Process captures
-        const capturedStones = this.processCaptures(room, newBoard, position, moveColor);
+        const capturedStones = this.processCaptures(room, newBoard, position);
 
         if (capturedStones.length == 0) {
             const group = this.findGroup(newBoard, position);
@@ -207,10 +213,10 @@ export class RoomService {
         // Calculate new hash
         let newHash = room.zobristHash;
         newHash ^= this.zobristTable[position.x][position.y][0];
-        newHash ^= this.zobristTable[position.x][position.y][stoneValue];
+        newHash ^= this.zobristTable[position.x][position.y][moveColor];
 
         for (const pos of capturedStones) {
-            const capturedValue = moveColor === 'black' ? 2 : 1;
+            const capturedValue = newBoard[pos.x][pos.y];
             newHash ^= this.zobristTable[pos.x][pos.y][capturedValue];
             newHash ^= this.zobristTable[pos.x][pos.y][0];
         }
@@ -220,9 +226,11 @@ export class RoomService {
 
         // Update game state
         room.board = newBoard;
-        room.prisoners[moveColor] += capturedStones.length;
+        room.prisoners[moveColor - 1] += capturedStones.length;
         room.moveHistory.push({ playerId, position, color: moveColor });
-        room.currentPlayer = moveColor === 'black' ? 'white' : 'black';
+        console.log(`Previous player: ${room.currentPlayer}`);
+        room.currentPlayer = (moveColor % room.players.length) + 1; // Switch player
+        console.log(`New player: ${room.currentPlayer}`);
 
         // Update KO info
         room.koInfo = capturedStones.length === 1 
@@ -236,15 +244,16 @@ export class RoomService {
         return true;
     }
 
-    private processCaptures(room: GameRoom, board: number[][], position: Position, moveColor: 'black' | 'white'): Position[] {
+    private processCaptures(room: GameRoom, board: number[][], position: Position): Position[] {
         const capturedStones: Position[] = [];
-        const opponent = moveColor === 'black' ? 2 : 1;
 
         for (const dir of this.directions) {
             const x = position.x + dir.x;
             const y = position.y + dir.y;
 
-            if (x >= 0 && x < room.boardSize && y >= 0 && y < room.boardSize && board[x][y] === opponent) {
+            if (x >= 0 && x < room.boardSize && y >= 0 && y < room.boardSize &&
+                board[x][y] !== room.currentPlayer && board[x][y] !== 0
+            ) {
                 const group = this.findGroup(board, {x, y});
                 if (!group.some(pos => this.hasLiberty(board, pos))) {
                     for (const pos of group) {

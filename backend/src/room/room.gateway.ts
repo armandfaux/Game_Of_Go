@@ -1,6 +1,7 @@
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Position, RoomService } from './room.service';
 import { Server, Socket } from 'socket.io';
+import { min } from 'rxjs';
 
 @WebSocketGateway(3001, {
   cors: {
@@ -13,6 +14,12 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @WebSocketServer() server: Server;
 
   constructor(private roomService: RoomService) {}
+
+  private minRoomSize = 2;
+  private maxRoomSize = 4;
+
+  private minBoardSize = 9;
+  private maxBoardSize = 19;
 
   afterInit(server: Server) {
     console.log('WebSocket Gateway initialized');
@@ -29,17 +36,27 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('createRoom')
   handleCreateRoom(client: Socket, payload: { roomSize: number; boardSize: number }) {
+    if (payload.roomSize < this.minRoomSize || payload.roomSize > this.maxRoomSize) {
+      return client.emit('error', { message: 'Invalid room size' });
+    }
+
+    if (payload.boardSize < this.minBoardSize || payload.boardSize > this.maxBoardSize) {
+      return client.emit('error', { message: 'Invalid board size' });
+    }
+
     const room = this.roomService.createRoom(payload.roomSize, payload.boardSize);
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
     client.emit('roomCreated', { 
       roomId: room.id,
+      roomSize: payload.roomSize,
+      players: room.players,
       boardSize: payload.boardSize,
       currentPlayer: room.currentPlayer,
-      gameState: room.state
+      // gameState: room.state
     });
-    console.log('Creating room with id:', room.id, 'and size:', payload.boardSize);
+    console.log('Creating room with id:', room.id, 'board size:', payload.boardSize, 'and player count:', payload.roomSize);
   }
 
   @SubscribeMessage('joinRoom')
@@ -57,19 +74,25 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     client.join(roomId);
-    client.emit('joinedRoom', { 
-      roomId,
+    this.server.to(roomId).emit('playerJoined', {
+      playerId: client.id,
+      roomId: roomId,
+      roomSize: room.roomSize,
+      players: room.players,
       boardSize: room.boardSize,
-      currentPlayer: room.currentPlayer
+      currentPlayer: room.currentPlayer,
+      // gameState: room.state,
     });
 
     // Notify all players in the room
-    this.server.to(roomId).emit('playerJoined', { 
-      playerId: client.id,
-      playerCount: room.players.length,
-      currentPlayer: room.currentPlayer,
-      gameState: room.state,
-    });
+    // this.server.to(roomId).emit('playerJoined', {
+    //   roomId: roomId,
+    //   roomSize: room.roomSize,
+    //   boardSize: room.boardSize,
+    //   playerId: client.id,
+    //   playerCount: room.players.length,
+    //   currentPlayer: room.currentPlayer,
+    // });
   }
 
   @SubscribeMessage('startGame')

@@ -15,7 +15,7 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ roomId, players, roomSize, boardSiz
     <div>
       <h3>Room Information</h3>
       <p><strong>Room ID:</strong> {roomId}</p>
-      <p><strong>{players.length}/{0} players</strong></p>
+      <p><strong>{players.length}/{roomSize} players</strong></p>
       <p><strong>Board size:</strong> {boardSize}</p>
       <p><strong>{currentPlayer}</strong> to play</p>
       <p><strong>Prisoners:</strong></p>

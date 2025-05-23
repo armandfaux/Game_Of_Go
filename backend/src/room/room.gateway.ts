@@ -47,7 +47,6 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
-    console.log('roomSize', payload.roomSize, 'boardSize', payload.boardSize);
     client.emit('roomCreated', { 
       roomId: room.id,
       roomSize: payload.roomSize,

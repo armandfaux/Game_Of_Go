@@ -1,2 +1,2 @@
 # Game_Of_Go
-Playing online Go
+Start playing Go now ---> http://52.65.144.173/

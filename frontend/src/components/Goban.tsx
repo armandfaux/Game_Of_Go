@@ -69,7 +69,6 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, boardSize, koPosition }) 
 
   useEffect(() => {
     const handleMoveMade = (data: MoveMadePayload) => {
-    console.log('Move made:', data);
     if (data.board) {
       // Convert server board from number[][] to Stone[][]
       const convertedBoard: Stone[][] = data.board.map(row =>

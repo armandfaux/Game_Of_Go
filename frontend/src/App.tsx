@@ -11,6 +11,8 @@ function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [roomInfo, setRoomInfo] = useState<{ 
     roomId: string;
+    roomSize: number;
+    players?: string[];
     boardSize: number;
     board?: number[][];
     currentPlayer: string;
@@ -23,10 +25,10 @@ function App() {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
     
     // PRODUCTION
-    // const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:3001');
+    const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:3001');
 
     // DEVELOPMENT
-    const socketInstance = io('http://localhost:3001');
+    // const socketInstance = io('http://localhost:3001');
 
     // Enable React auto rendering on socket events
     setSocket(socketInstance);
@@ -44,20 +46,24 @@ function App() {
 
     socketInstance.on('roomCreated', (data: { 
       roomId: string;
-
+      roomSize: number,
+      players: string[];
       boardSize: number,
       currentPlayer: string,
     }) => {
-      console.log(`[EVENT] Room ${data.roomId} created, size : ${data.boardSize}`);
+      console.log(`[EVENT] Room ${data.roomId} created`);
       setRoomInfo(data);
     });
 
-    socketInstance.on('joinedRoom', (data: {
+    socketInstance.on('playerJoined', (data: {
+      playerId: string;
       roomId: string,
+      roomSize: number,
+      players: string[];
       boardSize: number,
       currentPlayer: string,
     }) => {
-      console.log(`[EVENT] Room ${data.roomId} joined`);
+      console.log(`[EVENT] Player ${data.playerId} joined room ${data.roomId}`);
       setRoomInfo(data);
       setCurrentPlayer(data.currentPlayer);
     });
@@ -75,7 +81,6 @@ function App() {
       prisoners: {black: number, white: number},
       koPosition: {x: number, y: number}
     }) => {
-      console.log('ko position', data.koPosition);
       setCurrentPlayer(data.currentPlayer);
       setPrisoners(data.prisoners);
       setKoPosition(data.koPosition);
@@ -98,7 +103,7 @@ function App() {
       )}
       {roomInfo && (
         <div className="top-right">
-          <RoomInfo roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} currentPlayer={currentPlayer} prisoners={prisoners} />
+          <RoomInfo roomId={roomInfo.roomId} players={roomInfo.players || []} roomSize={roomInfo.roomSize} boardSize={roomInfo.boardSize} currentPlayer={currentPlayer} prisoners={prisoners} />
           <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
       )}

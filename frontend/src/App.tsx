@@ -101,12 +101,12 @@ function App() {
           <JoinGame socket={socket} />
         </div>
       )}
-      {roomInfo && (
+      {/* {roomInfo && (
         <div className="top-right">
           <RoomInfo roomId={roomInfo.roomId} players={roomInfo.players || []} roomSize={roomInfo.roomSize} boardSize={roomInfo.boardSize} currentPlayer={currentPlayer} prisoners={prisoners} />
           <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
-      )}
+      )} */}
       {/* {currentPlayer && socket && roomInfo && (
         <div className="goban-container">
           <Goban socket={socket} roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} koPosition={koPosition}></Goban>

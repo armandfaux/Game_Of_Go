@@ -1,7 +1,6 @@
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Position, RoomService } from './room.service';
 import { Server, Socket } from 'socket.io';
-import { min } from 'rxjs';
 
 @WebSocketGateway(3001, {
   cors: {
@@ -48,6 +47,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
+    console.log('roomSize', payload.roomSize, 'boardSize', payload.boardSize);
     client.emit('roomCreated', { 
       roomId: room.id,
       roomSize: payload.roomSize,

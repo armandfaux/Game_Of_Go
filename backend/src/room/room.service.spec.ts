@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { Position, RoomService } from './room.service';
+// import { Position, RoomService } from './room.service';
 
 // OUTDATED TESTS
 // describe('RoomService', () => {

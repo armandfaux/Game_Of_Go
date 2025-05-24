@@ -1,6 +1,8 @@
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Position, RoomService } from './room.service';
+import { RoomService } from './room.service';
+import { Position } from 'src/interface/game.interface';
 import { Server, Socket } from 'socket.io';
+import { GameService } from 'src/game/game.service';
 
 @WebSocketGateway(3001, {
   cors: {
@@ -12,7 +14,10 @@ import { Server, Socket } from 'socket.io';
 export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
-  constructor(private roomService: RoomService) {}
+  constructor(
+    private readonly roomService: RoomService,
+    private readonly gameService: GameService,
+  ) {}
 
   private minRoomSize = 2;
   private maxRoomSize = 4;
@@ -112,8 +117,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     // Execute move
-    const success = this.roomService.makeMove(
-      payload.roomId,
+    const success = this.gameService.makeMove(
+      room,
       client.id,
       payload.position,
     );
@@ -140,7 +145,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return client.emit('error', { message: 'Room not found' });
     }
 
-    const success = this.roomService.passTurn(roomId, client.id);
+    const success = this.gameService.passTurn(room, client.id);
 
     if (success) {
       this.server.to(roomId).emit('turnPassed', {

@@ -6,7 +6,7 @@ type RoomInfoProps = {
   players: string[],
   roomSize: number,
   boardSize: number,
-  currentPlayer: string,
+  currentPlayer: 'Black' | 'White' | 'Green' | 'Purple' | '?',
   prisoners: number[],
 };
 
@@ -21,7 +21,7 @@ const RoomInfo: React.FC<RoomInfoProps> = ({ roomId, players, roomSize, boardSiz
       <p><strong>Prisoners:</strong></p>
       <ul>
         <li>Black: {prisoners[0]}</li>
-        <li>White: {prisoners[0]}</li>
+        <li>White: {prisoners[1]}</li>
       </ul>
     </div>
   );

@@ -108,7 +108,13 @@ function App() {
             players={roomInfo.players || []}
             roomSize={roomInfo.roomSize}
             boardSize={roomInfo.boardSize}
-            currentPlayer={currentPlayer === 1 ? 'Black' : 'White'}
+            currentPlayer={
+              currentPlayer === 1 ? 'Black' :
+              currentPlayer === 2 ? 'White' :
+              currentPlayer === 3 ? 'Green' :
+              currentPlayer === 4 ? 'Purple' :
+              '?'
+            }
             prisoners={prisoners}
           />
           <StartGame socket={socket} roomId={roomInfo.roomId} />

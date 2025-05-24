@@ -185,6 +185,15 @@ export class RoomService {
             room.board[position.x][position.y] !== 0) {
             return false;
         }
+
+        // Check KO rule
+        if (room.koInfo.position && 
+            room.koInfo.position.x === position.x && 
+            room.koInfo.position.y === position.y && 
+            room.koInfo.restrictedPlayer === room.currentPlayer) {
+            return false;
+        }
+
         return true;
     }
 
@@ -228,18 +237,30 @@ export class RoomService {
         room.board = newBoard;
         room.prisoners[moveColor - 1] += capturedStones.length;
         room.moveHistory.push({ playerId, position, color: moveColor });
-        console.log(`Previous player: ${room.currentPlayer}`);
-        room.currentPlayer = (moveColor % room.players.length) + 1; // Switch player
-        console.log(`New player: ${room.currentPlayer}`);
+        room.currentPlayer = (moveColor % room.players.length) + 1;
 
         // Update KO info
-        room.koInfo = capturedStones.length === 1 
-            ? { position: capturedStones[0], restrictedPlayer: moveColor }
+        room.koInfo = capturedStones.length === 1
+            ? { position: capturedStones[0], restrictedPlayer: room.currentPlayer }
             : { position: null, restrictedPlayer: null };
 
         // Update hashes
         room.previousHashes.add(newHash);
         room.zobristHash = newHash;
+
+        return true;
+    }
+
+    passTurn(roomId: string, playerId: string): boolean {
+        const room = this.rooms.get(roomId);
+
+        if (!room || room.state !== 'playing') return false;
+
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
+
+        room.koInfo = { position: null, restrictedPlayer: null };
+        room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
 
         return true;
     }

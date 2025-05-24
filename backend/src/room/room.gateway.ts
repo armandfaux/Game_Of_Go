@@ -106,20 +106,11 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('makeMove')
   handleMakeMove(client: Socket, payload: { roomId: string; position: Position }) {
     const room = this.roomService.getRoom(payload.roomId);
+
     if (!room) {
       return client.emit('error', { message: 'Room not found' });
     }
-    
-    // Verify it's the player's turn
-    const playerIndex = room.players.indexOf(client.id);
-    if (playerIndex === -1) {
-      return client.emit('error', { message: 'You are not in this game' });
-    }
-    
-    if (room.currentPlayer !== playerIndex + 1) {
-      return client.emit('error', { message: 'Not your turn' });
-    }
-    
+
     // Execute move
     const success = this.roomService.makeMove(
       payload.roomId,
@@ -128,8 +119,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     );
     
     if (success) {
-      console.log('[CLIENT', client.id, 'SENT] \'makeMove\' at position:', payload.position);
-      // Broadcast updated game state to all in room
+      // console.log('[CLIENT', client.id, 'SENT] \'makeMove\' at position:', payload.position);
       this.server.to(payload.roomId).emit('moveMade', {
         position: payload.position,
         currentPlayer: room.currentPlayer,
@@ -139,6 +129,25 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
     } else {
       client.emit('invalidMove', { position: payload.position });
+    }
+  }
+
+  @SubscribeMessage('passTurn')
+  handlePassTurn(client: Socket, roomId: string) {
+    const room = this.roomService.getRoom(roomId);
+
+    if (!room) {
+      return client.emit('error', { message: 'Room not found' });
+    }
+
+    const success = this.roomService.passTurn(roomId, client.id);
+
+    if (success) {
+      this.server.to(roomId).emit('turnPassed', {
+        currentPlayer: room.currentPlayer,
+      });
+    } else {
+      client.emit('error', { message: 'Cannot pass turn' });
     }
   }
 }

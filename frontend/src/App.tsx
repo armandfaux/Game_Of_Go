@@ -17,7 +17,7 @@ function App() {
     players?: string[];
     boardSize?: number;
     board?: number[][];
-    currentPlayer: number;
+    currentPlayer?: number;
     gameState: string;
   } | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<number>(1);
@@ -100,6 +100,17 @@ function App() {
       currentPlayer: number,
     }) => {
       setCurrentPlayer(data.currentPlayer);
+    });
+
+    socketInstance.on('gameFinished', (data: {
+      roomId: string,
+      gameState: string,
+    }) => {
+      console.log('[EVENT] Game finished', data.gameState);
+      setRoomInfo(prevState => ({
+        ...prevState,
+        ...data,
+      }));
     });
 
 // ----------------------------------------------------------------------------------------------------------

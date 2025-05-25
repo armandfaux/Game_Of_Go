@@ -11,7 +11,7 @@ import { GameService } from 'src/game/game.service';
     credentials: true,
   },
 })
-export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
 
   constructor(
@@ -25,17 +25,17 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   private minBoardSize = 9;
   private maxBoardSize = 19;
 
-  afterInit(server: Server) {
-    console.log('WebSocket Gateway initialized');
-  }
+  // afterInit(server: Server) {
+  //   console.log('WebSocket Gateway initialized');
+  // }
 
   handleConnection(client: any, ...args: any[]) {
     client.emit('connected', { message: 'You are connected' });
-    console.log('[CONNECTION] Client ', client.id);
+    console.log('[CONNECTION] Client', client.id);
   }
 
   handleDisconnect(client: any) {
-    console.log('[DISCONNECTION] Client ', client.id);
+    console.log('[DISCONNECTION] Client', client.id);
   }
 
   @SubscribeMessage('createRoom')
@@ -154,6 +154,12 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.server.to(roomId).emit('turnPassed', {
         currentPlayer: room.currentPlayer,
       });
+      if (room.state === 'finished') {
+        this.server.to(roomId).emit('gameFinished', {
+          roomId: room.id,
+          gameState: room.state,
+        });
+      }
     } else {
       client.emit('error', { message: 'Cannot pass turn' });
     }
@@ -161,6 +167,21 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('resign')
   handleResign(client: Socket, roomId: string) {
-  }
+    const room = this.roomService.getRoom(roomId);
 
+    if (!room) {
+      return client.emit('error', { message: 'Room not found' });
+    }
+
+    const success = this.gameService.resign(room, client.id);
+
+    if (success) {
+      this.server.to(roomId).emit('gameFinished', {
+        roomId: room.id,
+        gameState: room.state,
+      });
+    } else {
+      client.emit('error', { message: 'Cannot resign' });
+    }
+  }
 }

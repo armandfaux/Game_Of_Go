@@ -178,22 +178,80 @@ export class GameService {
         room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
 
         if (++room.passCount >= room.roomSize) {
-            console.log(`Game ${room.id} finished due to consecutive passes`);
-            room.state = 'finished';
+            this.finishGame(room);
         }
 
         return true;
     }
 
     resign(room: GameRoom, playerId: string): boolean {
+        // Check if the room exists and is playing
         if (!room || room.state !== 'playing') return false;
 
+        // Check if the player is in the room
         const playerIndex = room.players.indexOf(playerId);
-        if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
+        if (playerIndex === -1) return false;
 
-        // room.state = 'finished';
+        this.finishGame(room);
 
         return true;
+    }
+
+    finishGame(room: GameRoom): void {
+        if (!room || room.state !== 'playing') return;
+
+        console.log(`[EVENT] Game ${room.id} finished`);
+        room.state = 'finished';
+        this.getTerritoryScores(room.board, room.roomSize);
+    }
+
+    getTerritoryScores(board: number[][], roomSize: number): void {
+        const territoryScore = new Array(roomSize + 1).fill(0);
+        const visited: Position[] = [];
+        const emptyPositions = this.findEmptyPositions(board);
+
+        for (const pos of emptyPositions) {
+            if (visited.some(v => v.x === pos.x && v.y === pos.y)) continue;
+
+            const group = this.findGroup(board, pos);
+
+            const territoryColor = this.findTerritoryColor(board, group);
+            territoryScore[territoryColor] += group.length;
+
+            group.map(p => visited.push(p));
+        }
+    }
+
+    findEmptyPositions(board: number[][]): Position[] {
+        return board.flatMap((row, x) =>
+            row.map((cell, y) => (cell === 0 ? { x, y } : null))
+            .filter((pos): pos is Position => pos !== null)
+        );
+    }
+
+    findTerritoryColor(board: number[][], group: Position[]): number {
+        var territoryColor = 0;
+
+        for (const pos of group) {
+            for (const dir of this.directions) {
+                const newX = pos.x + dir.x;
+                const newY = pos.y + dir.y;
+
+                if (newX < 0 || newX >= board.length || newY < 0 || newY >= board[newX].length) continue
+
+                if (board[newX][newY] > 0) {
+                    if (territoryColor === 0) {
+                        territoryColor = board[newX][newY];
+                    }
+
+                    if (board[newX][newY] !== territoryColor) {
+                        return 0;
+                    }
+                }
+            }
+        }
+
+        return territoryColor;
     }
 
     // -------------------------------------------

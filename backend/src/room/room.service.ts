@@ -8,7 +8,7 @@ export class RoomService implements OnModuleInit {
     private readonly rooms = new Map<string, GameRoom>();
     private readonly ROOM_TTL_MS = 1000 * 3600 * 24;
 
-    constructor(private readonly gameService: GameService) {}
+    constructor(private gameService: GameService) {}
 
     async onModuleInit() {
         this.startCleanupJob();

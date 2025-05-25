@@ -1,13 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { GameService } from 'src/game/game.service';
 import { GameRoom, Position } from 'src/interface/game.interface';
+import { setInterval } from 'timers/promises';
 
 @Injectable()
-export class RoomService {
+export class RoomService implements OnModuleInit {
     private readonly rooms = new Map<string, GameRoom>();
+    private readonly ROOM_TTL_MS = 1000 * 3600 * 24;
 
-    // construct game service
     constructor(private readonly gameService: GameService) {}
+
+    async onModuleInit() {
+        this.startCleanupJob();
+    }
+
+    private async startCleanupJob() {
+        const intervalMs = 1000 * 3600 * 12;
+
+        for await (const _ of setInterval(intervalMs)) {
+            await this.cleanupOldRooms();
+        }
+    }
+
+    private async cleanupOldRooms() {
+        const now = Date.now();
+        const rooms = this.rooms;
+
+        rooms.forEach((room, roomId) => {
+            const roomAge = now - room.createdAt.getTime();
+            if (roomAge > this.ROOM_TTL_MS) {
+                this.rooms.delete(roomId);
+                console.log(`Deleting stale room ${roomId}`);
+            }
+        });
+        this.displayRooms();
+    }
 
     private generateRoomId(): string {
         const length = 5;
@@ -35,6 +62,7 @@ export class RoomService {
             currentPlayer: 1,
             prisoners: new Array(roomSize).fill(0),
             moveHistory: [],
+            passCount: 0,
             state: 'waiting',
             createdAt: new Date(),
             koInfo: { position: null, restrictedPlayer: null },
@@ -95,10 +123,12 @@ export class RoomService {
     }
 
     displayRooms(): void {
-        console.log('Current Rooms:');
+        console.log(`[INFO] Current Rooms (${this.rooms.size}):`);
+        console.log('---------------------------------------------------------');
         this.rooms.forEach((room) => {
             console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.roomSize}, State: ${room.state}`);
         });
+        console.log('---------------------------------------------------------');
     }
 
     displayRoomInfo(roomId: string): void {

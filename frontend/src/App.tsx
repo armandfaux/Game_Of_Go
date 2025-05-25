@@ -6,16 +6,19 @@ import JoinGame from './components/JoinGame';
 import CreateGame from './components/CreateGame';
 import RoomInfo from './components/RoomInfo';
 import StartGame from './components/StartGame';
+import PassTurn from './components/PassTurn';
+import Resign from './components/Resign';
 
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [roomInfo, setRoomInfo] = useState<{ 
     roomId: string;
-    roomSize: number;
+    roomSize?: number;
     players?: string[];
-    boardSize: number;
+    boardSize?: number;
     board?: number[][];
     currentPlayer: number;
+    gameState: string;
   } | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<number>(1);
   const [prisoners, setPrisoners] = useState<number[]>([0, 0, 0, 0]);
@@ -50,8 +53,9 @@ function App() {
       players: string[];
       boardSize: number,
       currentPlayer: number,
+      gameState: string;
     }) => {
-      console.log(`[EVENT] Room ${data.roomId} created with size ${data.boardSize}`);
+      console.log(`[EVENT] Room ${data.roomId} created with size ${data.boardSize}`, data.gameState);
       setRoomInfo(data);
     });
 
@@ -62,6 +66,7 @@ function App() {
       players: string[];
       boardSize: number,
       currentPlayer: number,
+      gameState: string;
     }) => {
       console.log(`[EVENT] Player ${data.playerId} joined room ${data.roomId}`);
       setRoomInfo(data);
@@ -69,11 +74,16 @@ function App() {
     });
 
     socketInstance.on('gameStarted', (data: {
-      board: number[][];
+      roomId: string;
       currentPlayer: number
+      gameState: string;
     }) => {
-      console.log('[EVENT] Game started');
-      setCurrentPlayer(data.currentPlayer);
+      console.log('[EVENT] Game started', data.gameState);
+      // set roomInfo current player and game state
+        setRoomInfo(prevState => ({
+          ...prevState,
+          ...data,
+        }));
     });
 
     socketInstance.on('moveMade', (data: { 
@@ -84,6 +94,12 @@ function App() {
       setCurrentPlayer(data.currentPlayer);
       setPrisoners(data.prisoners);
       setKoPosition(data.koPosition);
+    });
+
+    socketInstance.on('turnPassed', (data: {
+      currentPlayer: number,
+    }) => {
+      setCurrentPlayer(data.currentPlayer);
     });
 
 // ----------------------------------------------------------------------------------------------------------
@@ -101,7 +117,7 @@ function App() {
           <JoinGame socket={socket} />
         </div>
       )}
-      {roomInfo && (
+      {roomInfo && roomInfo.roomSize && roomInfo.boardSize && (
         <div className="top-right">
           <RoomInfo
             roomId={roomInfo.roomId}
@@ -116,13 +132,30 @@ function App() {
               '?'
             }
             prisoners={prisoners}
+            gameState={roomInfo.gameState}
           />
-          <StartGame socket={socket} roomId={roomInfo.roomId} />
         </div>
       )}
-      {currentPlayer && socket && roomInfo && (
+      {roomInfo && roomInfo.gameState === 'waiting' && (
+        <div className="mid-right">
+          <StartGame socket={socket} roomId={roomInfo.roomId} />
+          
+        </div>
+      )}
+      {roomInfo && roomInfo.gameState === 'playing' && (
+        <div className="mid-right">
+          <PassTurn socket={socket} roomId={roomInfo.roomId} />
+          <Resign socket={socket} roomId={roomInfo.roomId} />
+        </div>
+      )}
+      {currentPlayer && socket && roomInfo && roomInfo.boardSize && roomInfo.gameState !== 'waiting' && (
         <div className="goban-container">
-          <Goban socket={socket} roomId={roomInfo.roomId} boardSize={roomInfo.boardSize} koPosition={koPosition}></Goban>
+          <Goban
+            socket={socket}
+            roomId={roomInfo.roomId}
+            boardSize={roomInfo.boardSize}
+            koPosition={koPosition}
+          />
         </div>
       )}
     </div>

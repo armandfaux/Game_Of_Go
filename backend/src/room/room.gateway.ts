@@ -31,11 +31,11 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   handleConnection(client: any, ...args: any[]) {
     client.emit('connected', { message: 'You are connected' });
-    console.log('Client connected:', client.id);
+    console.log('[CONNECTION] Client ', client.id);
   }
 
   handleDisconnect(client: any) {
-    console.log('Client disconnected:', client.id);
+    console.log('[DISCONNECTION] Client ', client.id);
   }
 
   @SubscribeMessage('createRoom')
@@ -58,9 +58,9 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       players: room.players,
       boardSize: payload.boardSize,
       currentPlayer: room.currentPlayer,
-      // gameState: room.state
+      gameState: room.state
     });
-    console.log('Creating room with id:', room.id, 'board size:', payload.boardSize, 'and player count:', payload.roomSize);
+    console.log('[EVENT] Creating room with id:', room.id, 'board size:', payload.boardSize, 'and player count:', payload.roomSize);
   }
 
   @SubscribeMessage('joinRoom')
@@ -85,7 +85,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       players: room.players,
       boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
-      // gameState: room.state,
+      gameState: room.state,
     });
   }
 
@@ -102,7 +102,10 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     this.server.to(roomId).emit('gameStarted', {
+      roomId: room.id,
+      roomSize: room.roomSize,
       board: room.board,
+      boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
       gameState: room.state,
     });
@@ -155,4 +158,9 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('error', { message: 'Cannot pass turn' });
     }
   }
+
+  @SubscribeMessage('resign')
+  handleResign(client: Socket, roomId: string) {
+  }
+
 }

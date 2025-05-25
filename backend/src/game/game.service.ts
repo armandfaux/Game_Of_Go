@@ -83,6 +83,7 @@ export class GameService {
         room.prisoners[moveColor - 1] += capturedStones.length;
         room.moveHistory.push({ playerId, position, color: moveColor });
         room.currentPlayer = (moveColor % room.players.length) + 1;
+        room.passCount = 0;
 
         // Update KO info
         room.koInfo = capturedStones.length === 1
@@ -92,18 +93,6 @@ export class GameService {
         // Update hashes
         room.previousHashes.add(newHash);
         room.zobristHash = newHash;
-
-        return true;
-    }
-
-    passTurn(room: GameRoom, playerId: string): boolean {
-        if (!room || room.state !== 'playing') return false;
-
-        const playerIndex = room.players.indexOf(playerId);
-        if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
-
-        room.koInfo = { position: null, restrictedPlayer: null };
-        room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
 
         return true;
     }
@@ -177,6 +166,34 @@ export class GameService {
             }
         }
         return false;
+    }
+
+    passTurn(room: GameRoom, playerId: string): boolean {
+        if (!room || room.state !== 'playing') return false;
+
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
+
+        room.koInfo = { position: null, restrictedPlayer: null };
+        room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
+
+        if (++room.passCount >= room.roomSize) {
+            console.log(`Game ${room.id} finished due to consecutive passes`);
+            room.state = 'finished';
+        }
+
+        return true;
+    }
+
+    resign(room: GameRoom, playerId: string): boolean {
+        if (!room || room.state !== 'playing') return false;
+
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
+
+        // room.state = 'finished';
+
+        return true;
     }
 
     // -------------------------------------------

@@ -22,6 +22,16 @@
   align-items: flex-end;
 }
 
+.mid-right {
+  position: absolute;
+  top: 400px;
+  right: 64px;
+  /* transform: translateY(-50%); */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 .goban-container {
   position: absolute;
   top: 50%;

@@ -15,7 +15,7 @@ type Stone = 'empty' | 'black' | 'white' | 'green' | 'purple';
 interface MoveMadePayload {
   position: { x: number; y: number };
   color: Stone;
-  board: Number[][];
+  board: number[][];
   // currentPlayer: Stone;
   // prisoners: { black: number; white: number };
 }
@@ -59,33 +59,43 @@ function getStarPoints(boardSize: number): { x: number; y: number }[] {
   ];
 }
 
+// Convert server board from number[][] to Stone[][]
+function convertBoard(board: number[][]): Stone[][] {
+  return board.map(row =>
+    row.map(value => {
+      if (value === 1) return 'black';
+      if (value === 2) return 'white';
+      if (value === 3) return 'green';
+      if (value === 4) return 'purple';
+      return 'empty';
+    })
+  );
+}
+
 const Goban: React.FC<GobanProps> = ({ socket, roomId, boardSize, koPosition }) => {
   const [board, setBoard] = useState<Stone[][]>(
     Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty'))
   );
   const [lastMove, setLastMove] = useState<{ x: number; y: number } | null>(null);
-
+  
   const starPoints = getStarPoints(boardSize);
 
   useEffect(() => {
     const handleMoveMade = (data: MoveMadePayload) => {
       if (data.board) {
-        // Convert server board from number[][] to Stone[][]
-        const convertedBoard: Stone[][] = data.board.map(row =>
-          row.map(value => {
-            if (value === 1) return 'black';
-            if (value === 2) return 'white';
-            if (value === 3) return 'green';
-            if (value === 4) return 'purple';
-            return 'empty';
-          })
-        );
-        setBoard(convertedBoard);
+        setBoard(convertBoard(data.board));
         setLastMove(data.position);
       }
     };
 
+    const handleGameStarted = (data: { board: number[][] }) => {
+      if (data.board) {
+        setBoard(convertBoard(data.board));
+      }
+    }
+
     socket.on('moveMade', handleMoveMade);
+
     return () => {
       socket.off('moveMade', handleMoveMade);
     };

@@ -23,6 +23,7 @@ export interface GameRoom {
     currentPlayer: number;
     prisoners: number[];
     moveHistory: Move[];
+    passCount: number;
     state: 'waiting' | 'playing' | 'finished';
     createdAt: Date;
     koInfo: {

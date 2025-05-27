@@ -12,3 +12,7 @@
   align-items: center;
   justify-content: center;
 }
+
+.goban.scoring {
+  filter: brightness(0.8);
+}

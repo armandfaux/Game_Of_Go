@@ -19,7 +19,7 @@ export interface GameRoom {
     prisoners: number[];
     moveHistory: Move[];
     passCount: number;
-    state: 'waiting' | 'playing' | 'finished';
+    state: 'waiting' | 'playing' | 'scoring' | 'finished';
     createdAt: Date;
     koInfo: {
         position: Position | null;

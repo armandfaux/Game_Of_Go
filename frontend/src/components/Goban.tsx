@@ -6,8 +6,10 @@ import { Socket } from 'socket.io-client';
 interface GobanProps {
   socket: Socket;
   roomId: string;
+  gameState: string;
   boardSize: number;
   koPosition: { x: number; y: number } | null;
+  gobanLabel: string;
 }
 
 type Stone = 'empty' | 'black' | 'white' | 'green' | 'purple';
@@ -72,7 +74,7 @@ function convertBoard(board: number[][]): Stone[][] {
   );
 }
 
-const Goban: React.FC<GobanProps> = ({ socket, roomId, boardSize, koPosition }) => {
+const Goban: React.FC<GobanProps> = ({ socket, roomId, gameState, boardSize, koPosition, gobanLabel }) => {
   const [board, setBoard] = useState<Stone[][]>(
     Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty'))
   );
@@ -123,8 +125,13 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, boardSize, koPosition }) 
   }
 
   return (
-    <div className="goban" style={{ '--size': boardSize } as React.CSSProperties}>
+    <div>
+      <h3 className="goban-label">
+        {gobanLabel}
+      </h3>
+    <div className={`goban ${gameState}`} style={{ '--size': boardSize } as React.CSSProperties}>
       {intersections}
+    </div>
     </div>
   );
 };

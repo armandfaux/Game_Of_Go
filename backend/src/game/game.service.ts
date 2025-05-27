@@ -178,7 +178,8 @@ export class GameService {
         room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
 
         if (++room.passCount >= room.roomSize) {
-            this.finishGame(room);
+            room.state = 'scoring';
+            // this.finishGame(room);
         }
 
         return true;

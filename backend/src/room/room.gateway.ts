@@ -156,8 +156,8 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(roomId).emit('turnPassed', {
         currentPlayer: room.currentPlayer,
       });
-      if (room.state === 'finished') {
-        this.server.to(roomId).emit('gameFinished', {
+      if (room.state === 'scoring') {
+        this.server.to(roomId).emit('gameScoring', {
           roomId: room.id,
           gameState: room.state,
         });

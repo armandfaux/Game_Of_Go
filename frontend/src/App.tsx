@@ -23,6 +23,7 @@ function App() {
   const [currentPlayer, setCurrentPlayer] = useState<number>(1);
   const [prisoners, setPrisoners] = useState<number[]>([]);
   const [koPosition, setKoPosition] = useState<{ x: number; y: number } | null>(null);
+  const [gobanLabel, setGobanLabel] = useState<string>('Goban');
 
   useEffect(() => {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
@@ -106,11 +107,21 @@ function App() {
       setCurrentPlayer(data.currentPlayer);
     });
 
+    socketInstance.on('gameScoring', (data: {
+      roomId: string,
+      gameState: string,
+    }) => {
+      setRoomInfo(prevState => ({
+        ...prevState,
+        ...data,
+      }));
+      setGobanLabel('Mark the dead stones');
+    });
+
     socketInstance.on('gameFinished', (data: {
       roomId: string,
       gameState: string,
     }) => {
-      console.log('[EVENT] Game finished', data.gameState);
       setRoomInfo(prevState => ({
         ...prevState,
         ...data,
@@ -169,8 +180,10 @@ function App() {
           <Goban
             socket={socket}
             roomId={roomInfo.roomId}
+            gameState={roomInfo.gameState}
             boardSize={roomInfo.boardSize}
             koPosition={koPosition}
+            gobanLabel={gobanLabel}
           />
         </div>
       )}

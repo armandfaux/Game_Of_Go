@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Socket } from 'socket.io-client';
-import styles from './CreateGame.module.css'
+import styles from '../styles/CreateGame.module.css';
 
 interface CreateGameProps {
   socket: Socket | null;

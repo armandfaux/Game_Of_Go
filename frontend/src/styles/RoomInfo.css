@@ -39,7 +39,6 @@
   border: 2px solid #8c00c4;
 }
 
-
 .room-info-title {
   color: #2c3e50;
   margin-top: 0;
@@ -125,7 +124,7 @@
 .player-other { color: #e74c3c; }
 
 /* Status color classes */
-.status-waiting { color: #f39c12; }
-.status-playing { color: #27ae60; }
+.status-waiting { color: #de931b; }
+.status-playing { color: #138c45; }
 .status-finished { color: #e74c3c; }
 .status-undefined { color: #7f8c8d; }

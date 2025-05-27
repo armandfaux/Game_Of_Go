@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import './Goban.css';
+import '../styles/Goban.css';
 import Intersection from './Intersection';
 import { Socket } from 'socket.io-client';
 

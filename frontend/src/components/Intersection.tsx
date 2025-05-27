@@ -1,5 +1,5 @@
 import React from 'react';
-import './Intersection.css';
+import '../styles/Intersection.css';
 import { Socket } from 'socket.io-client';
 
 interface IntersectionProps {

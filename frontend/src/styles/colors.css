@@ -1,0 +1,9 @@
+:root {
+  --goban-border: #4a3520; /* Darker wood tone */
+  --goban-margin: #e8e0d5; /* Warmer parchment */
+  --goban-board: #d6c7b4; /* Soft beige */
+  --goban-line: rgba(94, 91, 88, 0.5); /* Dark brown */
+  --goban-star: #89775f; /* Muted purple */
+
+  --wood-grain: url('data:image/svg+xml;utf8,<svg ...>'); /* Optional */
+}

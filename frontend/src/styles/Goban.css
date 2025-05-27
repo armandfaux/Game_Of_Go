@@ -2,13 +2,13 @@
   display: grid;
   grid-template-columns: repeat(var(--size), 32px);
   grid-template-rows: repeat(var(--size), 32px);
-  background-color: #87addb;
-  border: 2px solid #3e3e3e;
+  background-color: var(--goban-margin);
+  border: 2px solid var(--goban-border);
   padding-top: 32px;
   padding-left: 32px;
   width: fit-content;
   position: relative;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 6px 3px rgba(0, 0, 0, 0.15);
   align-items: center;
   justify-content: center;
 }

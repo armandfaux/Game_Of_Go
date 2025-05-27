@@ -1,6 +1,6 @@
 // components/RoomInfo.tsx
 import React from 'react';
-import './RoomInfo.css';
+import '../styles/RoomInfo.css';
 import { Socket } from 'socket.io-client';
 
 type RoomInfoProps = {

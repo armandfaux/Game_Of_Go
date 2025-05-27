@@ -197,6 +197,9 @@ export class GameService {
         return true;
     }
 
+    // -------------------------------------------
+    // ----------- End of game system ------------
+    // -------------------------------------------
     finishGame(room: GameRoom): void {
         if (!room || room.state !== 'playing') return;
 
@@ -205,7 +208,7 @@ export class GameService {
         this.getTerritoryScores(room.board, room.roomSize);
     }
 
-    getTerritoryScores(board: number[][], roomSize: number): void {
+    getTerritoryScores(board: number[][], roomSize: number): number[] {
         const territoryScore = new Array(roomSize + 1).fill(0);
         const visited: Position[] = [];
         const emptyPositions = this.findEmptyPositions(board);
@@ -220,6 +223,8 @@ export class GameService {
 
             group.map(p => visited.push(p));
         }
+
+        return territoryScore;
     }
 
     findEmptyPositions(board: number[][]): Position[] {
@@ -254,6 +259,8 @@ export class GameService {
         return territoryColor;
     }
 
+
+
     // -------------------------------------------
     // -- Zobrist hashing for superko detection --
     // -------------------------------------------
@@ -282,7 +289,7 @@ export class GameService {
         return BigInt(`0x${hash.substring(0, 16)}`);
     }
 
-    calculateInitialHash(boardSize: number): bigint {
+    public calculateInitialHash(boardSize: number): bigint {
         let hash = 0n;
         for (let x = 0; x < boardSize; x++) {
             for (let y = 0; y < boardSize; y++) {

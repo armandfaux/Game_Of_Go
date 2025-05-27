@@ -21,7 +21,7 @@ function App() {
     gameState: string;
   } | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<number>(1);
-  const [prisoners, setPrisoners] = useState<number[]>([0, 0, 0, 0]);
+  const [prisoners, setPrisoners] = useState<number[]>([]);
   const [koPosition, setKoPosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -47,16 +47,18 @@ function App() {
       console.error('[ERROR]', error);
     });
 
-    socketInstance.on('roomCreated', (data: { 
+    socketInstance.on('roomCreated', (data: {
       roomId: string;
       roomSize: number,
       players: string[];
       boardSize: number,
       currentPlayer: number,
+      prisoners: number[],
       gameState: string;
     }) => {
       console.log(`[EVENT] Room ${data.roomId} created with size ${data.boardSize}`, data.gameState);
       setRoomInfo(data);
+      setPrisoners(data.prisoners);
     });
 
     socketInstance.on('playerJoined', (data: {
@@ -66,10 +68,12 @@ function App() {
       players: string[];
       boardSize: number,
       currentPlayer: number,
+      prisoners: number[],
       gameState: string;
     }) => {
       console.log(`[EVENT] Player ${data.playerId} joined room ${data.roomId}`);
       setRoomInfo(data);
+      setPrisoners(data.prisoners);
       setCurrentPlayer(data.currentPlayer);
     });
 
@@ -128,7 +132,7 @@ function App() {
           <JoinGame socket={socket} />
         </div>
       )}
-      {roomInfo && roomInfo.roomSize && roomInfo.boardSize && (
+      {roomInfo && roomInfo.roomSize && roomInfo.boardSize && socket && (
         <div className="top-right">
           <RoomInfo
             roomId={roomInfo.roomId}
@@ -140,10 +144,11 @@ function App() {
               currentPlayer === 2 ? 'White' :
               currentPlayer === 3 ? 'Green' :
               currentPlayer === 4 ? 'Purple' :
-              '?'
+              'Other'
             }
             prisoners={prisoners}
             gameState={roomInfo.gameState}
+            socketId={socket.id}
           />
         </div>
       )}

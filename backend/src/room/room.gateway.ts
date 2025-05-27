@@ -58,9 +58,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       players: room.players,
       boardSize: payload.boardSize,
       currentPlayer: room.currentPlayer,
+      prisoners: room.prisoners,
       gameState: room.state
     });
-    console.log('[EVENT] Creating room with id:', room.id, 'board size:', payload.boardSize, 'and player count:', payload.roomSize);
+    console.log(`[EVENT] Creating room | id: ${room.id} | board size: ${payload.boardSize} | player count: ${payload.roomSize}`);
   }
 
   @SubscribeMessage('joinRoom')
@@ -85,6 +86,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       players: room.players,
       boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
+      prisoners: room.prisoners,
       gameState: room.state,
     });
   }

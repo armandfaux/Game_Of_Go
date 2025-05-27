@@ -9,11 +9,6 @@ export interface Move {
     color: number;
 }
 
-export interface Player {
-    id: string;
-    color: number;
-}
-
 export interface GameRoom {
     id: string;
     roomSize: number;
@@ -33,3 +28,9 @@ export interface GameRoom {
     zobristHash: bigint;
     previousHashes: Set<bigint>;
 }
+
+// interface GroupGraph {
+//   stones: Position[];      // All stones in the group
+//   liberties: Position[];   // Current liberties
+//   children: GroupGraph[];  // Possible future states after moves
+// }

@@ -79,6 +79,8 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, gameState, boardSize, koP
     Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty'))
   );
   const [lastMove, setLastMove] = useState<{ x: number; y: number } | null>(null);
+
+  const [markedStones, setMarkedStones] = useState<{ x: number; y: number }[]>([]);
   
   const starPoints = getStarPoints(boardSize);
 
@@ -90,11 +92,11 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, gameState, boardSize, koP
       }
     };
 
-    const handleGameStarted = (data: { board: number[][] }) => {
-      if (data.board) {
-        setBoard(convertBoard(data.board));
-      }
-    }
+    // const handleGameStarted = (data: { board: number[][] }) => {
+    //   if (data.board) {
+    //     setBoard(convertBoard(data.board));
+    //   }
+    // }
 
     socket.on('moveMade', handleMoveMade);
 
@@ -113,16 +115,19 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, gameState, boardSize, koP
           position={{ x, y }}
           socket={socket}
           roomId={roomId}
-          state={board[x][y] || 'empty'}
+          color={board[x][y] || 'empty'}
           isLastRow={y === boardSize - 1}
           isLastCol={x === boardSize - 1}
           isLastMove={lastMove?.x === x && lastMove?.y === y}
           hasStar={hasStarPoint}
           isKo={koPosition?.x === x && koPosition?.y === y}
+          gameState={gameState}
         />
       );
     }
   }
+
+  console.log('[GOBAN] Intersections:', intersections);
 
   return (
     <div>

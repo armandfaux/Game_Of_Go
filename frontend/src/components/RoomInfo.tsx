@@ -26,7 +26,6 @@ const RoomInfo: React.FC<RoomInfoProps> = ({
   gameState,
   socketId,
 }) => {
-  console.log('Player color: ', playerColors[players.indexOf(socketId || "")]);
   return (
     <div className={`room-info-card ${playerColors[players.indexOf(socketId || "")].toLowerCase()}`}>
       <h3 className="room-info-title">Room Information</h3>

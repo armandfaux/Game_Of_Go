@@ -33,7 +33,7 @@
 }
 
 .intersection-dot.empty:hover {
-    background-color: rgba(110, 110, 110, 0.5);
+    background-color: rgba(110, 110, 110, var(--hover-opacity, 0.5));
 }
 
 .intersection-dot.black {

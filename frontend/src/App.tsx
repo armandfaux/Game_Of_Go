@@ -60,6 +60,7 @@ function App() {
       console.log(`[EVENT] Room ${data.roomId} created with size ${data.boardSize}`, data.gameState);
       setRoomInfo(data);
       setPrisoners(data.prisoners);
+      setGobanLabel('Waiting for players');
     });
 
     socketInstance.on('playerJoined', (data: {
@@ -73,9 +74,13 @@ function App() {
       gameState: string;
     }) => {
       console.log(`[EVENT] Player ${data.playerId} joined room ${data.roomId}`);
-      setRoomInfo(data);
+      setRoomInfo(prevState => ({
+          ...prevState,
+          ...data,
+        }));
       setPrisoners(data.prisoners);
       setCurrentPlayer(data.currentPlayer);
+      setGobanLabel('Waiting for players');
     });
 
     socketInstance.on('gameStarted', (data: {
@@ -89,6 +94,7 @@ function App() {
           ...prevState,
           ...data,
         }));
+        setGobanLabel('Game in progress');
     });
 
     socketInstance.on('moveMade', (data: { 

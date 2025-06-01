@@ -88,8 +88,6 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, gameState, boardSize, koP
     }
   }
 
-  console.log('[GOBAN] Intersections:', intersections);
-
   return (
     <div>
       <h3 className="goban-label">

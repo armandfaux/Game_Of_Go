@@ -143,46 +143,17 @@ function App() {
 
   return (
     <div className="App">
-      {socket && (
-        <div className="top-left">
-          <CreateGame socket={socket} />
-          <JoinGame socket={socket} />
-        </div>
-      )}
-      {roomInfo && roomInfo.roomSize && roomInfo.boardSize && socket && (
-        <div className="top-right">
-          <RoomInfo
-            roomId={roomInfo.roomId}
-            players={roomInfo.players || []}
-            roomSize={roomInfo.roomSize}
-            boardSize={roomInfo.boardSize}
-            currentPlayer={
-              currentPlayer === 1 ? 'Black' :
-              currentPlayer === 2 ? 'White' :
-              currentPlayer === 3 ? 'Green' :
-              currentPlayer === 4 ? 'Purple' :
-              'Other'
-            }
-            prisoners={prisoners}
-            gameState={roomInfo.gameState}
-            socketId={socket.id}
-          />
-        </div>
-      )}
-      {roomInfo && roomInfo.gameState === 'waiting' && (
-        <div className="mid-right">
-          <StartGame socket={socket} roomId={roomInfo.roomId} />
-          
-        </div>
-      )}
-      {roomInfo && roomInfo.gameState === 'playing' && (
-        <div className="mid-right">
-          <PassTurn socket={socket} roomId={roomInfo.roomId} />
-          <Resign socket={socket} roomId={roomInfo.roomId} />
-        </div>
-      )}
-      {currentPlayer && socket && roomInfo && roomInfo.boardSize && roomInfo.gameState !== 'waiting' && (
-        <div className="goban-container">
+      <aside className='left-panel'>
+        { socket && (
+          <div>
+            <CreateGame socket={socket} />
+            <JoinGame socket={socket} />
+          </div>
+        )}
+      </aside>
+      <main className='main-panel'>
+        {currentPlayer && socket && roomInfo && roomInfo.boardSize && roomInfo.gameState !== 'waiting' && (
+        <div style={{margin: '35px'}}>
           <Goban
             socket={socket}
             roomId={roomInfo.roomId}
@@ -193,6 +164,40 @@ function App() {
           />
         </div>
       )}
+      </main>
+      <aside className='right-panel'>
+        {roomInfo && roomInfo.roomSize && roomInfo.boardSize && socket && (
+          <div>
+            <RoomInfo
+              roomId={roomInfo.roomId}
+              players={roomInfo.players || []}
+              roomSize={roomInfo.roomSize}
+              boardSize={roomInfo.boardSize}
+              currentPlayer={
+                currentPlayer === 1 ? 'Black' :
+                currentPlayer === 2 ? 'White' :
+                currentPlayer === 3 ? 'Green' :
+                currentPlayer === 4 ? 'Purple' :
+                'Other'
+              }
+              prisoners={prisoners}
+              gameState={roomInfo.gameState}
+              socketId={socket.id}
+            />
+          </div>
+        )}
+        {roomInfo && roomInfo.gameState === 'waiting' && (
+          <div style={{ marginTop: '20px' }}>
+            <StartGame socket={socket} roomId={roomInfo.roomId} />
+          </div>
+        )}
+        {roomInfo && roomInfo.gameState === 'playing' && (
+          <div style={{ marginTop: '20px' }}>
+            <PassTurn socket={socket} roomId={roomInfo.roomId} />
+            <Resign socket={socket} roomId={roomInfo.roomId} />
+          </div>
+        )}
+      </aside>
     </div>
   );
 }

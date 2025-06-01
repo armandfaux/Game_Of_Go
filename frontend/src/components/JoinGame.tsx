@@ -38,6 +38,7 @@ const JoinGame: React.FC<JoinGameProps> = ({ socket }) => {
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
             style={{
+            width: '140px',
             padding: '8px',
             fontSize: '1rem',
             borderRadius: '4px',

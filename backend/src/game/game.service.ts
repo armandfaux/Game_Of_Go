@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { retry } from 'rxjs';
 import { GameRoom, Position } from 'src/interface/game.interface';
 
 // DESCRIPTION:
@@ -12,8 +13,14 @@ export class GameService {
         { x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }
     ];
 
+    public minPlayers = 2;
+    public maxPlayers = 4;
+
+    public minBoardSize = 5;
+    public maxBoardSize = 24;
+
     constructor() {
-        this.initializeZobristTable(19);
+        this.initializeZobristTable(this.maxBoardSize);
     }
 
     isValidMove(room: GameRoom, playerId: string, position: Position): boolean {
@@ -207,6 +214,25 @@ export class GameService {
         console.log(`[EVENT] Game ${room.id} finished`);
         room.state = 'finished';
         this.getTerritoryScores(room.board, room.roomSize);
+    }
+
+    markGroup(room: GameRoom, playerId: string, start: Position): boolean {
+        if (!room || room.state !== 'scoring') return false;
+        if (room.board[start.x][start.y] === 0) return false;
+
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1) return false;
+
+        const positions = this.findGroup(room.board, start);
+        if (room.markedStones[playerIndex].some(pos => start.x === pos.x && start.y === pos.y)) {
+            // unmark if already marked
+            room.markedStones[playerIndex] = room.markedStones[playerIndex].filter(pos => !positions.some(p => p.x === pos.x && p.y === pos.y));
+        } else {
+            // mark the group
+            room.markedStones[playerIndex] = room.markedStones[playerIndex].concat(positions);
+        }
+
+        return true;
     }
 
     getTerritoryScores(board: number[][], roomSize: number): number[] {

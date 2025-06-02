@@ -57,17 +57,18 @@ export class RoomService implements OnModuleInit {
             id: roomId,
             roomSize,
             players: [],
+            currentPlayer: 1,
+            state: 'waiting',
             boardSize,
             board,
-            currentPlayer: 1,
             prisoners: new Array(roomSize).fill(0),
-            moveHistory: [],
             passCount: 0,
-            state: 'waiting',
-            createdAt: new Date(),
+            moveHistory: [],
+            markedStones: Array.from({ length: roomSize }, () => [] as Position[]),
             koInfo: { position: null, restrictedPlayer: null },
             zobristHash: this.gameService.calculateInitialHash(boardSize),
-            previousHashes: new Set()
+            previousHashes: new Set(),
+            createdAt: new Date(),
         };
 
         newRoom.previousHashes.add(newRoom.zobristHash);

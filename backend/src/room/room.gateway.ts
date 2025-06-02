@@ -19,12 +19,6 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameService: GameService,
   ) {}
 
-  private minRoomSize = 2;
-  private maxRoomSize = 4;
-
-  private minBoardSize = 9;
-  private maxBoardSize = 19;
-
   // afterInit(server: Server) {
   //   console.log('WebSocket Gateway initialized');
   // }
@@ -40,11 +34,11 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('createRoom')
   handleCreateRoom(client: Socket, payload: { roomSize: number; boardSize: number }) {
-    if (payload.roomSize < this.minRoomSize || payload.roomSize > this.maxRoomSize) {
+    if (payload.roomSize < this.gameService.minPlayers || payload.roomSize > this.gameService.maxPlayers) {
       return client.emit('error', { message: 'Invalid room size' });
     }
 
-    if (payload.boardSize < this.minBoardSize || payload.boardSize > this.maxBoardSize) {
+    if (payload.boardSize < this.gameService.minBoardSize || payload.boardSize > this.gameService.maxBoardSize) {
       return client.emit('error', { message: 'Invalid board size' });
     }
 
@@ -184,6 +178,28 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
     } else {
       client.emit('error', { message: 'Cannot resign' });
+    }
+  }
+
+  @SubscribeMessage('markStone')
+  handleMarkStone(client: Socket, payload: { roomId: string; position: Position }) {
+
+    const room = this.roomService.getRoom(payload.roomId);
+
+    if (!room) {
+      return client.emit('error', { message: 'Room not found' });
+    }
+
+    const success = this.gameService.markGroup(room, client.id, payload.position);
+
+    if (success) {
+      console.log('[SERVER] emit stoneMarked event:');
+      console.log('Marked stones:', room.markedStones);
+      this.server.to(payload.roomId).emit('stoneMarked', {
+        markedStones: room.markedStones,
+      });
+    } else {
+      client.emit('error', { message: 'Cannot mark stone' });
     }
   }
 }

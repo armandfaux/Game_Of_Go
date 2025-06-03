@@ -72,6 +72,15 @@
   box-shadow: 0 0 4px 2px rgb(255, 32, 32);
 }
 
+.intersection-dot.marked {
+  opacity: 0.6;
+  box-shadow: 0 0 4px 2px rgba(44, 44, 44, 0.7);
+}
+
+.intersection-dot.contested {
+  box-shadow: 0 0 4px 2px rgba(255, 0, 0, 0.7);
+}
+
 .ko-label {
   position: absolute;
   transform: translate(-50%, -50%);

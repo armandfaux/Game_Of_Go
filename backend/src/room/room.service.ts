@@ -15,7 +15,7 @@ export class RoomService implements OnModuleInit {
     }
 
     private async startCleanupJob() {
-        const intervalMs = 1000 * 3600 * 12;
+        const intervalMs = 1000 * 3600 * 6;
 
         for await (const _ of setInterval(intervalMs)) {
             await this.cleanupOldRooms();

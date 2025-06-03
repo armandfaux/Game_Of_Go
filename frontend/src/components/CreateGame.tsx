@@ -7,7 +7,8 @@ interface CreateGameProps {
 }
 
 const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
-  const [boardSize, setBoardSize] = useState<number>(19);
+  const defaultBoardSize = 13;
+  const [boardSize, setBoardSize] = useState<number>(defaultBoardSize);
   const [roomSize, setRoomSize] = useState<number>(2);
 
   const handleCreateRoom = () => {
@@ -28,13 +29,15 @@ const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
         </label>
         <select
           id="board-size"
-          value={boardSize}
           onChange={(e) => setBoardSize(Number(e.target.value))}
           className={styles.select}
+          defaultValue={defaultBoardSize}
         >
-          <option value={9}>9×9 (Beginner)</option>
-          <option value={13}>13×13 (Intermediate)</option>
-          <option value={19}>19×19 (Standard)</option>
+          <option value={5}>5×5 (First steps)</option>
+          <option value={9}>9×9 (Small)</option>
+          <option value={13}>13×13 (Medium)</option>
+          <option value={19}>19×19 (Official)</option>
+          <option value={24}>24×24 (Huge)</option>
         </select>
       </div>
 

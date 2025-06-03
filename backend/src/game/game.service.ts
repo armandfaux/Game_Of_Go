@@ -186,7 +186,6 @@ export class GameService {
 
         if (++room.passCount >= room.roomSize) {
             room.state = 'scoring';
-            // this.finishGame(room);
         }
 
         return true;

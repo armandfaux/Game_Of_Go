@@ -6,6 +6,11 @@ export type Player = {
     color: string,
 }
 
+export type Position = {
+    x: number,
+    y: number,
+}
+
 export type RoomInfo = {
     id: string,
     roomSize: number,

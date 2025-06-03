@@ -157,6 +157,7 @@ function App() {
           <Goban
             socket={socket}
             roomId={roomInfo.roomId}
+            players={roomInfo.players || []}
             gameState={roomInfo.gameState}
             boardSize={roomInfo.boardSize}
             koPosition={koPosition}

@@ -4,6 +4,35 @@
   --goban-board: #d6c7b4; /* Soft beige */
   --goban-line: rgba(94, 91, 88, 0.5); /* Dark brown */
   --goban-star: #89775f; /* Muted purple */
+}
 
-  --wood-grain: url('data:image/svg+xml;utf8,<svg ...>'); /* Optional */
+:root {--goban-border: #1e1e1e;     /* Cast iron */
+--goban-margin: #2c2c2c;     /* Soft black */
+--goban-board: #3a3a3a;      /* Fogged steel */
+--goban-line: rgba(240, 240, 240, 0.15); /* Misty silver */
+--goban-star: #b4b4b4;       /* Desaturated clay */
+}
+
+:root {
+  --goban-border: #5a5a5a;     /* Medium stone gray */
+--goban-margin: #f4f1ea;     /* Pale sand */
+--goban-board: #dad2c3;      /* Warm driftwood beige */
+--goban-line: rgba(60, 60, 60, 0.5);  /* Soft charcoal */
+--goban-star: #7a6e5d;       /* Dried mud */
+}
+
+:root {
+  --goban-border: #2b2b2b;     /* Charcoal */
+  --goban-margin: #e0dbd7;     /* Soft ash */
+  --goban-board: #bfb8b2;      /* Warm concrete */
+  --goban-line: rgba(90, 80, 80, 0.4);  /* Faded coal */
+  --goban-star: #983b2e;       /* Ember red */
+}
+
+:root {
+--goban-border: #2a3c2b;     /* Mossy bark */
+--goban-margin: #dbe7dc;     /* Mist green */
+--goban-board: #b4cbb6;      /* Sage leaf */
+--goban-line: rgba(40, 60, 45, 0.5);  /* Fern shadow */
+--goban-star: #50724d;       /* Olive stone */
 }

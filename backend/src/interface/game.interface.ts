@@ -18,9 +18,10 @@ export interface GameRoom {
     boardSize: number;
     board: number[][];
     prisoners: number[];
+    scores: number[];
     passCount: number;
-    moveHistory: Move[];
     markedStones: Position[][];
+    playersConfirmed: string[];
     koInfo: {
         position: Position | null;
         restrictedPlayer: number | null;

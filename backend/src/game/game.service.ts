@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { retry } from 'rxjs';
 import { GameRoom, Position } from 'src/interface/game.interface';
+import { Logger } from '@nestjs/common';
 
 // DESCRIPTION:
 // The GameService is responsible for managing the game logic,
@@ -9,9 +9,15 @@ import { GameRoom, Position } from 'src/interface/game.interface';
 
 @Injectable()
 export class GameService {
+    logger = new Logger(GameService.name);
+
     private readonly directions = [
         { x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }
     ];
+
+    afterInit() {
+        console.log('GameService initialized');
+    };
 
     public minPlayers = 2;
     public maxPlayers = 4;
@@ -88,7 +94,6 @@ export class GameService {
         // Update game state
         room.board = newBoard;
         room.prisoners[moveColor - 1] += capturedStones.length;
-        room.moveHistory.push({ playerId, position, color: moveColor });
         room.currentPlayer = (moveColor % room.players.length) + 1;
         room.passCount = 0;
 
@@ -208,11 +213,16 @@ export class GameService {
     // ----------- End of game system ------------
     // -------------------------------------------
     finishGame(room: GameRoom): void {
-        if (!room || room.state !== 'playing') return;
+        if (!room) return;
 
         console.log(`[EVENT] Game ${room.id} finished`);
         room.state = 'finished';
-        this.getTerritoryScores(room.board, room.roomSize);
+        this.removeDeadStones(room);
+        this.getTerritoryScores(room.board, room.roomSize).map((score, index) => {
+            // scores[0] is neutral territory (dame)
+            // following values are player scores (added to prisoners)
+            room.scores[index] = (index === 0) ? score : score + room.prisoners[index - 1];
+        });
     }
 
     markGroup(room: GameRoom, playerId: string, start: Position): boolean {
@@ -231,7 +241,55 @@ export class GameService {
             room.markedStones[playerIndex] = room.markedStones[playerIndex].concat(positions);
         }
 
+        room.playersConfirmed = [];
         return true;
+    }
+
+    // TODO Rename
+    checkMarkedStones(stones: Position[][]): boolean {
+        const signature = JSON.stringify(stones[0].slice().sort((a, b) => a.x - b.x || a.y - b.y));
+
+        return stones.every(subArray => {
+            const currentSignature = JSON.stringify(
+                subArray.slice().sort((a, b) => a.x - b.x || a.y - b.y)
+            );
+            return currentSignature === signature;
+        });
+    }
+
+    // Return true if the player can confirm or cancel, false otherwise
+    confirmMarking(room: GameRoom, playerId: string): boolean {
+        if (!room || room.state !== 'scoring') return false;
+
+        if (!room.players.includes(playerId)) return false;
+
+        if (room.playersConfirmed.includes(playerId)) {
+            room.playersConfirmed = room.playersConfirmed.filter(id => id !== playerId);
+            return true;
+        }
+
+        if (this.checkMarkedStones(room.markedStones)) {
+
+            room.playersConfirmed.push(playerId);
+
+            // Check if all players have confirmed
+            if (room.playersConfirmed.length >= room.players.length) {
+                this.finishGame(room);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    removeDeadStones(room: GameRoom): void {
+        if (!room) return;
+
+        room.markedStones[0].forEach(pos => {
+            // TODO:  DOESN'T WORK FOR 3 & 4 PLAYERS
+            const index = room.board[pos.x][pos.y] % 2;
+            room.prisoners[index]++; // Increment the player's prisoners count
+            room.board[pos.x][pos.y] = 0; // Remove the stone from the board
+        });
     }
 
     getTerritoryScores(board: number[][], roomSize: number): number[] {
@@ -284,8 +342,6 @@ export class GameService {
 
         return territoryColor;
     }
-
-
 
     // -------------------------------------------
     // -- Zobrist hashing for superko detection --

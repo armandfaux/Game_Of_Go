@@ -62,9 +62,10 @@ export class RoomService implements OnModuleInit {
             boardSize,
             board,
             prisoners: new Array(roomSize).fill(0),
+            scores: new Array(roomSize + 1).fill(0), // scores[0] indicates neutral territory (dame)
             passCount: 0,
-            moveHistory: [],
             markedStones: Array.from({ length: roomSize }, () => [] as Position[]),
+            playersConfirmed: [],
             koInfo: { position: null, restrictedPlayer: null },
             zobristHash: this.gameService.calculateInitialHash(boardSize),
             previousHashes: new Set(),
@@ -141,7 +142,6 @@ export class RoomService implements OnModuleInit {
             console.log(`Board Size:        ${room.boardSize}`);
             console.log(`Current Player:    ${room.currentPlayer}`);
             console.log(`State:             ${room.state}`);
-            console.log(`Moves played:      ${room.moveHistory.length}`);
             console.log('---------------------------------------------------------');
         } else {
             console.log(`Room with ID ${roomId} not found.`);

@@ -21,7 +21,7 @@ interface IntersectionProps {
 const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, color, boardSize, isLastRow, isLastCol, isLastMove, hasStar, isKo, gameState, isMarked, isContested }) => {
   const handleClick = () => {
     if (gameState === 'playing') {
-      socket.emit('makeMove', {roomId, position});
+      socket.emit('makeMove', { roomId, position });
     }
 
     if (gameState === 'scoring') {
@@ -34,10 +34,15 @@ const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, c
   return (
     <div className={cellClass} style={{ '--size': boardSize } as React.CSSProperties}>
       {hasStar && <div className="star-point" />}
-      {/* {(gameState === 'playing') && ( */}
 
       <div
-          className={`intersection-dot ${color} ${isLastMove ? 'last-move' : ''} ${isKo ? 'ko' : ''} ${isMarked ? 'marked' : ''} ${isContested ? 'contested' : ''}`}
+          className={`intersection-dot
+            ${color}
+            ${isLastMove ? 'last-move' : ''}
+            ${isKo && gameState === 'playing' ? 'ko' : ''}
+            ${isMarked ? 'marked' : ''}
+            ${isContested ? 'contested' : ''}`
+          }
           style={{ '--hover-opacity': gameState === 'playing' ? 0.5 : 0 } as React.CSSProperties}
       >
         <button

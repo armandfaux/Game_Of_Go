@@ -56,7 +56,6 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, players, gameState, board
 
     const handleStoneMarked = (data: { markedStones: Position[][] }) => {
         setMarkedStones(data.markedStones);
-        console.log('Marked stones updated:', markedStones);
     };
 
     socket.on('moveMade', handleMoveMade);

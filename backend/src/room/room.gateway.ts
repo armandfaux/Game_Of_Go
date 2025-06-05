@@ -19,10 +19,6 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameService: GameService,
   ) {}
 
-  // afterInit(server: Server) {
-  //   console.log('WebSocket Gateway initialized');
-  // }
-
   handleConnection(client: any, ...args: any[]) {
     client.emit('connected', { message: 'You are connected' });
     console.log('[CONNECTION] Client', client.id);
@@ -193,13 +189,41 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const success = this.gameService.markGroup(room, client.id, payload.position);
 
     if (success) {
-      console.log('[SERVER] emit stoneMarked event:');
-      console.log('Marked stones:', room.markedStones);
       this.server.to(payload.roomId).emit('stoneMarked', {
         markedStones: room.markedStones,
       });
     } else {
       client.emit('error', { message: 'Cannot mark stone' });
+    }
+  }
+
+  @SubscribeMessage('confirmMarking')
+  handleConfirmMarking(client: Socket, roomId: string) {
+    const room = this.roomService.getRoom(roomId);
+
+    if (!room) {
+      return client.emit('error', { message: 'Room not found' });
+    }
+    
+    const success = this.gameService.confirmMarking(room, client.id);
+
+    if (success) {
+      if (room.state === 'scoring') {
+        this.server.to(roomId).emit('markingConfirmed', {
+          roomId: room.id,
+          gameState: room.state,
+          playersConfirmed: room.playersConfirmed,
+        });
+      } else if (room.state === 'finished') {
+          this.server.to(roomId).emit('gameFinished', {
+            roomId: room.id,
+            board: room.board,
+            gameState: room.state,
+            scores: room.scores,
+        });
+      }
+    } else {
+      client.emit('error', { message: 'Cannot confirm marking' });
     }
   }
 }

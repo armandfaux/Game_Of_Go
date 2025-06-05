@@ -8,6 +8,7 @@ import RoomInfo from './components/RoomInfo';
 import StartGame from './components/StartGame';
 import PassTurn from './components/PassTurn';
 import Resign from './components/Resign';
+import ConfirmMarking from './components/ConfirmMarking';
 
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -24,6 +25,8 @@ function App() {
   const [prisoners, setPrisoners] = useState<number[]>([]);
   const [koPosition, setKoPosition] = useState<{ x: number; y: number } | null>(null);
   const [gobanLabel, setGobanLabel] = useState<string>('Goban');
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [scores, setScores] = useState<number[]>([]);
 
   useEffect(() => {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
@@ -134,6 +137,40 @@ function App() {
       }));
     });
 
+    socketInstance.on('stoneMarked', (data: {
+    }) => {
+      setIsConfirmed(false);
+    });
+
+    socketInstance.on('markingConfirmed', (data: {
+      roomId: string,
+      gameState: string,
+      playersConfirmed: string[],
+    }) => {
+      setRoomInfo(prevState => ({
+        ...prevState,
+        ...data,
+      }));
+
+      setIsConfirmed(
+        socketInstance.id && data.playersConfirmed.includes(socketInstance.id) ? true : false
+      )
+    });
+
+    socketInstance.on('gameFinished', (data: {
+      roomId: string,
+      board: number[][],
+      gameState: string
+      scores: number[],
+    }) => {
+      console.log('[EVENT] Game finished', data.gameState);
+      setRoomInfo(prevState => ({
+        ...prevState,
+        ...data,
+      }));
+      setScores(data.scores);
+    });
+
 // ----------------------------------------------------------------------------------------------------------
 
     return () => {
@@ -196,6 +233,24 @@ function App() {
           <div style={{ marginTop: '20px' }}>
             <PassTurn socket={socket} roomId={roomInfo.roomId} />
             <Resign socket={socket} roomId={roomInfo.roomId} />
+          </div>
+        )}
+        {roomInfo && roomInfo.gameState === 'scoring' && (
+          <div style={{ marginTop: '20px' }}>
+            <ConfirmMarking socket={socket} roomId={roomInfo.roomId} isConfirmed={isConfirmed} />
+          </div>
+        )}
+        {roomInfo && roomInfo.gameState === 'finished' && (
+          // Display scores
+          <div style={{ marginTop: '20px' }}>
+            <h3>Game Over</h3>
+            <p>Scores:</p>
+            {scores.map((score, index) => (
+              <p key={index}>
+                Player {index + 1}: {score} points
+              </p>
+            ))}
+
           </div>
         )}
       </aside>

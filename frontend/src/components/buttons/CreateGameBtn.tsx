@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Socket } from 'socket.io-client';
 import styles from '../styles/CreateGame.module.css';
 
-interface CreateGameProps {
+interface CreateGameBtnProps {
   socket: Socket | null;
 }
 
-const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
+const CreateGameBtn: React.FC<CreateGameBtnProps> = ({ socket }) => {
   const defaultBoardSize = 13;
   const [boardSize, setBoardSize] = useState<number>(defaultBoardSize);
   const [roomSize, setRoomSize] = useState<number>(2);
@@ -67,4 +67,4 @@ const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
   );
 };
 
-export default CreateGame;
+export default CreateGameBtn;

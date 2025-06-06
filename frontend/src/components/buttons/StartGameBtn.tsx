@@ -2,36 +2,34 @@
 import React from 'react';
 import { Socket } from 'socket.io-client';
 
-type PassTurnProps = {
+type StartGameBtnProps = {
   socket: Socket | null;
   roomId: string;
 };
 
-const PassTurn: React.FC<PassTurnProps> = ({ socket, roomId }) => {
-  const handlePassTurn = () => {
+const StartGameBtn: React.FC<StartGameBtnProps> = ({ socket, roomId }) => {
+  const handleStartGame = () => {
     if (socket && roomId) {
-      socket.emit('passTurn', roomId);
+      socket.emit('startGame', roomId);
     }
   };
 
   return (
     <button
-        onClick={handlePassTurn} disabled={!roomId}
+        onClick={handleStartGame} disabled={!roomId}
         style={{
-                marginTop: '16px',
-                width: '120px',
                 padding: '8px 16px',
                 fontSize: '1rem',
                 borderRadius: '4px',
                 border: 'none',
-                backgroundColor: '#ba9c56',
+                backgroundColor: '#0077ff',
                 color: 'white',
                 cursor: 'pointer',
         }}
     >
-      Pass Turn
+      Start Game
     </button>
   );
 };
 
-export default PassTurn;
+export default StartGameBtn;

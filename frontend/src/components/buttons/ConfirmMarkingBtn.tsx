@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Socket } from 'socket.io-client';
 
-type ConfirmMarkingProps = {
+type ConfirmMarkingBtnProps = {
   socket: Socket | null;
   roomId: string;
   isConfirmed: boolean;
 };
 
-const ConfirmMarking: React.FC<ConfirmMarkingProps> = ({ socket, roomId, isConfirmed }) => {
+const ConfirmMarkingBtn: React.FC<ConfirmMarkingBtnProps> = ({ socket, roomId, isConfirmed }) => {
   const handleConfirmMarking = () => {
     if (socket && roomId) {
       const newState = !isConfirmed;
@@ -56,4 +56,4 @@ const ConfirmMarking: React.FC<ConfirmMarkingProps> = ({ socket, roomId, isConfi
   );
 };
 
-export default ConfirmMarking;
+export default ConfirmMarkingBtn;

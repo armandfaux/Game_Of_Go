@@ -3,7 +3,7 @@ import '../styles/Goban.css';
 import Intersection from './Intersection';
 import { Socket } from 'socket.io-client';
 import { Position, Stone } from '../types/gameTypes';
-import { getStarPoints } from '../utils/starPoints';
+import { getStarPoints } from '../utils/star_points';
 
 interface GobanProps {
   socket: Socket;

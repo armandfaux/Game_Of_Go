@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import './App.css';
 import Goban from './components/Goban';
-import JoinGame from './components/JoinGame';
-import CreateGame from './components/CreateGame';
+import JoinGameBtn from './components/buttons/JoinGameBtn';
+import CreateGameBtn from './components/buttons/CreateGameBtn';
 import RoomInfo from './components/RoomInfo';
-import StartGame from './components/StartGame';
-import PassTurn from './components/PassTurn';
-import Resign from './components/Resign';
-import ConfirmMarking from './components/ConfirmMarking';
+import StartGameBtn from './components/buttons/StartGameBtn';
+import PassTurnBtn from './components/buttons/PassTurnBtn';
+import ResignBtn from './components/buttons/ResignBtn';
+import ConfirmMarkingBtn from './components/buttons/ConfirmMarkingBtn';
 
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -183,8 +183,8 @@ function App() {
       <aside className='left-panel'>
         { socket && (
           <div>
-            <CreateGame socket={socket} />
-            <JoinGame socket={socket} />
+            <CreateGameBtn socket={socket} />
+            <JoinGameBtn socket={socket} />
           </div>
         )}
       </aside>
@@ -226,18 +226,18 @@ function App() {
         )}
         {roomInfo && roomInfo.gameState === 'waiting' && (
           <div style={{ marginTop: '20px' }}>
-            <StartGame socket={socket} roomId={roomInfo.roomId} />
+            <StartGameBtn socket={socket} roomId={roomInfo.roomId} />
           </div>
         )}
         {roomInfo && roomInfo.gameState === 'playing' && (
           <div style={{ marginTop: '20px' }}>
-            <PassTurn socket={socket} roomId={roomInfo.roomId} />
-            <Resign socket={socket} roomId={roomInfo.roomId} />
+            <PassTurnBtn socket={socket} roomId={roomInfo.roomId} />
+            <ResignBtn socket={socket} roomId={roomInfo.roomId} />
           </div>
         )}
         {roomInfo && roomInfo.gameState === 'scoring' && (
           <div style={{ marginTop: '20px' }}>
-            <ConfirmMarking socket={socket} roomId={roomInfo.roomId} isConfirmed={isConfirmed} />
+            <ConfirmMarkingBtn socket={socket} roomId={roomInfo.roomId} isConfirmed={isConfirmed} />
           </div>
         )}
         {roomInfo && roomInfo.gameState === 'finished' && (

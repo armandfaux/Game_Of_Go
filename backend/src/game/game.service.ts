@@ -218,11 +218,18 @@ export class GameService {
         console.log(`[EVENT] Game ${room.id} finished`);
         room.state = 'finished';
         this.removeDeadStones(room);
+        // print board using logger
+
+        // print scores
+        this.logger.log(`1. Scores for room ${room.id}: ${room.scores.join(', ')}`);
+
         this.getTerritoryScores(room.board, room.roomSize).map((score, index) => {
             // scores[0] is neutral territory (dame)
             // following values are player scores (added to prisoners)
-            room.scores[index] = (index === 0) ? score : score + room.prisoners[index - 1];
+            room.scores[index] += (index === 0) ? score : score + room.prisoners[index - 1];
         });
+        this.logger.log(`2. Scores for room ${room.id}: ${room.scores.join(', ')}`);
+
     }
 
     markGroup(room: GameRoom, playerId: string, start: Position): boolean {
@@ -245,7 +252,7 @@ export class GameService {
         return true;
     }
 
-    // TODO Rename
+    // Return true if all players have marked the same stones as "dead", false otherwise
     checkMarkedStones(stones: Position[][]): boolean {
         const signature = JSON.stringify(stones[0].slice().sort((a, b) => a.x - b.x || a.y - b.y));
 
@@ -284,11 +291,17 @@ export class GameService {
     removeDeadStones(room: GameRoom): void {
         if (!room) return;
 
+        this.logger.log(`[EVENT] Removing dead stones in room ${room.id}`);
+
         room.markedStones[0].forEach(pos => {
-            // TODO:  DOESN'T WORK FOR 3 & 4 PLAYERS
-            const index = room.board[pos.x][pos.y] % 2;
-            room.prisoners[index]++; // Increment the player's prisoners count
             room.board[pos.x][pos.y] = 0; // Remove the stone from the board
+
+            const group = this.findGroup(room.board, pos);
+            const territoryColor = this.findTerritoryColor(room.board, group, room.markedStones[0]);
+
+            if (territoryColor > 0) {
+                room.scores[territoryColor] += 1;
+            }
         });
     }
 
@@ -297,17 +310,20 @@ export class GameService {
         const visited: Position[] = [];
         const emptyPositions = this.findEmptyPositions(board);
 
+        this.logger.log(`Final board:\n${board.map(row => row.join(' ')).join('\n')}`);
+
         for (const pos of emptyPositions) {
             if (visited.some(v => v.x === pos.x && v.y === pos.y)) continue;
 
             const group = this.findGroup(board, pos);
 
-            const territoryColor = this.findTerritoryColor(board, group);
+            const territoryColor = this.findTerritoryColor(board, group, []);
             territoryScore[territoryColor] += group.length;
 
             group.map(p => visited.push(p));
         }
 
+        this.logger.log(`Territory scores: ${territoryScore.join(', ')}`);
         return territoryScore;
     }
 
@@ -318,7 +334,8 @@ export class GameService {
         );
     }
 
-    findTerritoryColor(board: number[][], group: Position[]): number {
+    // Return index of the player owning this territory, ignore Position in deadStones[]
+    findTerritoryColor(board: number[][], group: Position[], deadStones: Position[]): number {
         var territoryColor = 0;
 
         for (const pos of group) {
@@ -326,7 +343,8 @@ export class GameService {
                 const newX = pos.x + dir.x;
                 const newY = pos.y + dir.y;
 
-                if (newX < 0 || newX >= board.length || newY < 0 || newY >= board[newX].length) continue
+                if (newX < 0 || newX >= board.length || newY < 0 || newY >= board[newX].length) continue;
+                if (deadStones.some(p => p.x === newX && p.y === newY)) continue;
 
                 if (board[newX][newY] > 0) {
                     if (territoryColor === 0) {

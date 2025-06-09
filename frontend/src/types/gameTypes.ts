@@ -1,10 +1,10 @@
 export type Stone = 'empty' | 'black' | 'white' | 'green' | 'purple';
 
-export type Player = {
-    id: string,
-    name: string,
-    color: string,
-}
+// export type Player = {
+//     id: string,
+//     name: string,
+//     color: string,
+// }
 
 export type Position = {
     x: number,
@@ -22,5 +22,14 @@ export type RoomInfo = {
     prisoners: number[],
     koPosition: { x: number, y: number } | null,
 
+    playersConfirmed: string[],
+    scores: number[],
+
     gameState: string,
 }
+
+//   const [socket, setSocket] = useState<Socket | null>(null);
+
+//   const [gobanLabel, setGobanLabel] = useState<string>('Goban');
+//   const [isConfirmed, setIsConfirmed] = useState(false);
+//   const [scores, setScores] = useState<number[]>([]);

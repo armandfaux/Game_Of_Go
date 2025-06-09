@@ -28,6 +28,32 @@ function App() {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [scores, setScores] = useState<number[]>([]);
 
+  const [roomInfoObject, setRoomInfoObject] = useState<{
+    id: string;
+    roomSize: number;
+    players: string[];
+    currentPlayer: number;  
+    boardSize: number;
+    board: number[][];
+    prisoners: number[];
+    koPosition: { x: number, y: number } | null;
+    playersConfirmed: string[];
+    scores: number[];
+    gameState: string;
+  }>({
+    id: '',
+    roomSize: 0,
+    players: [],
+    currentPlayer: 1,
+    boardSize: 0,
+    board: [],
+    prisoners: [],
+    koPosition: null,
+    playersConfirmed: [],
+    scores: [],
+    gameState: 'waiting',
+  });
+
   useEffect(() => {
     console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
     

@@ -42,14 +42,14 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
-    client.emit('roomCreated', { 
-      roomId: room.id,
+    client.emit('updateRoomInfo', { 
+      id: room.id,
       roomSize: payload.roomSize,
       players: room.players,
       boardSize: payload.boardSize,
       currentPlayer: room.currentPlayer,
       prisoners: room.prisoners,
-      gameState: room.state
+      gameState: room.gameState
     });
     console.log(`[EVENT] Creating room | id: ${room.id} | board size: ${payload.boardSize} | player count: ${payload.roomSize}`);
   }
@@ -69,15 +69,15 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     client.join(roomId);
-    this.server.to(roomId).emit('playerJoined', {
+    this.server.to(roomId).emit('updateRoomInfo', {
+      id: roomId,
       playerId: client.id,
-      roomId: roomId,
       roomSize: room.roomSize,
       players: room.players,
       boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
       prisoners: room.prisoners,
-      gameState: room.state,
+      gameState: room.gameState,
     });
   }
 
@@ -93,13 +93,13 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return client.emit('error', { message: 'Cannot start game' });
     }
 
-    this.server.to(roomId).emit('gameStarted', {
-      roomId: room.id,
+    this.server.to(roomId).emit('updateRoomInfo', {
+      id: room.id,
       roomSize: room.roomSize,
       board: room.board,
       boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
-      gameState: room.state,
+      gameState: room.gameState,
     });
   }
 
@@ -125,7 +125,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
         currentPlayer: room.currentPlayer,
         board: room.board,
         prisoners: room.prisoners,
-        koPosition: room.koInfo.position,
+        koPosition: room.koPosition,
       });
     } else {
       client.emit('invalidMove', { position: payload.position });
@@ -146,10 +146,10 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(roomId).emit('turnPassed', {
         currentPlayer: room.currentPlayer,
       });
-      if (room.state === 'scoring') {
-        this.server.to(roomId).emit('gameScoring', {
-          roomId: room.id,
-          gameState: room.state,
+      if (room.gameState === 'scoring') {
+        this.server.to(roomId).emit('updateRoomInfo', {
+          id: room.id,
+          gameState: room.gameState,
         });
       }
     } else {
@@ -168,9 +168,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const success = this.gameService.resign(room, client.id);
 
     if (success) {
-      this.server.to(roomId).emit('gameFinished', {
-        roomId: room.id,
-        gameState: room.state,
+      this.server.to(roomId).emit('updateRoomInfo', {
+        id: room.id,
+        gameState: room.gameState,
       });
     } else {
       client.emit('error', { message: 'Cannot resign' });
@@ -208,17 +208,17 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const success = this.gameService.confirmMarking(room, client.id);
 
     if (success) {
-      if (room.state === 'scoring') {
+      if (room.gameState === 'scoring') {
         this.server.to(roomId).emit('markingConfirmed', {
           roomId: room.id,
-          gameState: room.state,
+          gameState: room.gameState,
           playersConfirmed: room.playersConfirmed,
         });
-      } else if (room.state === 'finished') {
-          this.server.to(roomId).emit('gameFinished', {
-            roomId: room.id,
+      } else if (room.gameState === 'finished') {
+          this.server.to(roomId).emit('updateRoomInfo', {
+            id: room.id,
             board: room.board,
-            gameState: room.state,
+            gameState: room.gameState,
             scores: room.scores,
         });
       }

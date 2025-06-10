@@ -14,18 +14,19 @@ export interface GameRoom {
     roomSize: number;
     players: string[];
     currentPlayer: number;
-    state: 'waiting' | 'playing' | 'scoring' | 'finished';
+    gameState: 'waiting' | 'playing' | 'scoring' | 'finished';
+
     boardSize: number;
     board: number[][];
     prisoners: number[];
+    koPosition: Position | null;
+
+    playersConfirmed: string[];
     scores: number[];
+
     passCount: number;
     markedStones: Position[][];
-    playersConfirmed: string[];
-    koInfo: {
-        position: Position | null;
-        restrictedPlayer: number | null;
-    };
+    restrictedPlayer: number | null;
     zobristHash: bigint;
     previousHashes: Set<bigint>;
     createdAt: Date;

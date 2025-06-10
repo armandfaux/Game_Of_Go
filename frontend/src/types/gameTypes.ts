@@ -11,21 +11,21 @@ export type Position = {
     y: number,
 }
 
-export type RoomInfo = {
+export type RoomInfoObj = {
     id: string,
     roomSize: number,
     players: string[],
     currentPlayer: number,
+    gameState: 'waiting' | 'playing' | 'scoring' | 'finished',
 
     boardSize: number,
     board: number[][],
     prisoners: number[],
-    koPosition: { x: number, y: number } | null,
+    koPosition: Position | null,
 
     playersConfirmed: string[],
     scores: number[],
 
-    gameState: string,
 }
 
 //   const [socket, setSocket] = useState<Socket | null>(null);

@@ -2,22 +2,16 @@ import React, { useEffect, useState } from 'react';
 import '../styles/Goban.css';
 import Intersection from './Intersection';
 import { Socket } from 'socket.io-client';
-import { Position, Stone } from '../types/gameTypes';
+import { Position, RoomInfoObj, Stone } from '../types/gameTypes';
 import { getStarPoints } from '../utils/star_points';
 
 interface GobanProps {
   socket: Socket;
-  roomId: string;
-  players: string[];
-  gameState: string;
-  boardSize: number;
-  koPosition: { x: number; y: number } | null;
-  gobanLabel: string;
+  roomInfo: RoomInfoObj
 }
 
 interface MoveMadePayload {
   position: { x: number; y: number };
-  color: Stone;
   board: number[][];
   // currentPlayer: Stone;
   // prisoners: { black: number; white: number };
@@ -36,15 +30,14 @@ function convertBoard(board: number[][]): Stone[][] {
   );
 }
 
-const Goban: React.FC<GobanProps> = ({ socket, roomId, players, gameState, boardSize, koPosition, gobanLabel }) => {
-  const [board, setBoard] = useState<Stone[][]>(
-    Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty'))
-  );
+const Goban: React.FC<GobanProps> = ({ socket, roomInfo }) => {
+  const [board, setBoard] = useState<Stone[][]>(convertBoard(roomInfo.board));
+  
   const [lastMove, setLastMove] = useState<{ x: number; y: number } | null>(null);
 
   const [markedStones, setMarkedStones] = useState<Position[][]>([[], []]);
   
-  const starPoints = getStarPoints(boardSize);
+  const starPoints = getStarPoints(roomInfo.boardSize);
 
   useEffect(() => {
     const handleMoveMade = (data: MoveMadePayload) => {
@@ -67,16 +60,16 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, players, gameState, board
   }, [socket]);
 
   const intersections = [];
-  const playerIndex = players.indexOf(socket.id || '');
+  const playerIndex = roomInfo.players.indexOf(socket.id || '');
 
-  for (let y = 0; y < boardSize; y++) {
-    for (let x = 0; x < boardSize; x++) {
+  for (let y = 0; y < roomInfo.boardSize; y++) {
+    for (let x = 0; x < roomInfo.boardSize; x++) {
 
       const hasStarPoint = starPoints.some(p => p.x === x && p.y === y);
       let isMarked = false;
       let isContested = false;
 
-      if (gameState === 'scoring' && board[x][y] !== 'empty') {
+      if (roomInfo.gameState === 'scoring' && board[x][y] !== 'empty') {
         if (playerIndex >= 0 && playerIndex < markedStones.length) {
           isMarked = markedStones[playerIndex].some(pos => pos.x === x && pos.y === y);
         }
@@ -90,15 +83,15 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, players, gameState, board
           key={`${x}-${y}`}
           position={{ x, y }}
           socket={socket}
-          roomId={roomId}
+          roomId={roomInfo.id}
           color={board[x][y] || 'empty'}
-          boardSize={boardSize}
-          isLastRow={y === boardSize - 1}
-          isLastCol={x === boardSize - 1}
+          boardSize={roomInfo.boardSize}
+          isLastRow={y === roomInfo.boardSize - 1}
+          isLastCol={x === roomInfo.boardSize - 1}
           isLastMove={lastMove?.x === x && lastMove?.y === y}
           hasStar={hasStarPoint}
-          isKo={koPosition?.x === x && koPosition?.y === y}
-          gameState={gameState}
+          isKo={roomInfo.koPosition?.x === x && roomInfo.koPosition?.y === y}
+          gameState={roomInfo.gameState}
           isMarked={isMarked}
           isContested={isContested}
         />
@@ -109,9 +102,9 @@ const Goban: React.FC<GobanProps> = ({ socket, roomId, players, gameState, board
   return (
     <div>
       <h3 className="goban-label">
-        {gobanLabel}
+        {"Goban"}
       </h3>
-    <div className={`goban ${gameState}`} style={{ '--size': boardSize } as React.CSSProperties}>
+    <div className={`goban ${roomInfo.gameState}`} style={{ '--size': roomInfo.boardSize } as React.CSSProperties}>
       {intersections}
     </div>
     </div>

@@ -30,7 +30,7 @@ export class GameService {
     }
 
     isValidMove(room: GameRoom, playerId: string, position: Position): boolean {
-        if (room.state !== 'playing') return false;
+        if (room.gameState !== 'playing') return false;
 
         // Check if the player is in the room
         const playerIndex = room.players.indexOf(playerId);
@@ -47,10 +47,10 @@ export class GameService {
         }
 
         // Check KO rule
-        if (room.koInfo.position && 
-            room.koInfo.position.x === position.x && 
-            room.koInfo.position.y === position.y && 
-            room.koInfo.restrictedPlayer === room.currentPlayer) {
+        if (room.koPosition && 
+            room.koPosition.x === position.x && 
+            room.koPosition.y === position.y && 
+            room.restrictedPlayer === room.currentPlayer) {
             return false;
         }
 
@@ -98,9 +98,13 @@ export class GameService {
         room.passCount = 0;
 
         // Update KO info
-        room.koInfo = capturedStones.length === 1
-            ? { position: capturedStones[0], restrictedPlayer: room.currentPlayer }
-            : { position: null, restrictedPlayer: null };
+        room.koPosition = capturedStones.length === 1
+            ? capturedStones[0]
+            : null;
+
+        room.restrictedPlayer = capturedStones.length === 1
+            ? room.currentPlayer
+            : null;
 
         // Update hashes
         room.previousHashes.add(newHash);
@@ -181,16 +185,17 @@ export class GameService {
     }
 
     passTurn(room: GameRoom, playerId: string): boolean {
-        if (!room || room.state !== 'playing') return false;
+        if (!room || room.gameState !== 'playing') return false;
 
         const playerIndex = room.players.indexOf(playerId);
         if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
 
-        room.koInfo = { position: null, restrictedPlayer: null };
+        room.koPosition = null;
+        room.restrictedPlayer = null;
         room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
 
         if (++room.passCount >= room.roomSize) {
-            room.state = 'scoring';
+            room.gameState = 'scoring';
         }
 
         return true;
@@ -198,7 +203,7 @@ export class GameService {
 
     resign(room: GameRoom, playerId: string): boolean {
         // Check if the room exists and is playing
-        if (!room || room.state !== 'playing') return false;
+        if (!room || room.gameState !== 'playing') return false;
 
         // Check if the player is in the room
         const playerIndex = room.players.indexOf(playerId);
@@ -216,7 +221,7 @@ export class GameService {
         if (!room) return;
 
         console.log(`[EVENT] Game ${room.id} finished`);
-        room.state = 'finished';
+        room.gameState = 'finished';
         this.removeDeadStones(room);
         this.getTerritoryScores(room.board, room.roomSize).map((score, index) => {
             // scores[0] is neutral territory (dame)
@@ -226,7 +231,7 @@ export class GameService {
     }
 
     markGroup(room: GameRoom, playerId: string, start: Position): boolean {
-        if (!room || room.state !== 'scoring') return false;
+        if (!room || room.gameState !== 'scoring') return false;
         if (room.board[start.x][start.y] === 0) return false;
 
         const playerIndex = room.players.indexOf(playerId);
@@ -259,7 +264,7 @@ export class GameService {
 
     // Return true if the player can confirm or cancel, false otherwise
     confirmMarking(room: GameRoom, playerId: string): boolean {
-        if (!room || room.state !== 'scoring') return false;
+        if (!room || room.gameState !== 'scoring') return false;
 
         if (!room.players.includes(playerId)) return false;
 

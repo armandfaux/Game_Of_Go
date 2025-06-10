@@ -58,15 +58,19 @@ export class RoomService implements OnModuleInit {
             roomSize,
             players: [],
             currentPlayer: 1,
-            state: 'waiting',
+            gameState: 'waiting',
+
             boardSize,
             board,
             prisoners: new Array(roomSize).fill(0),
+            koPosition: null,
+            
+            playersConfirmed: [],
             scores: new Array(roomSize + 1).fill(0), // scores[0] indicates neutral territory (dame)
+
             passCount: 0,
             markedStones: Array.from({ length: roomSize }, () => [] as Position[]),
-            playersConfirmed: [],
-            koInfo: { position: null, restrictedPlayer: null },
+            restrictedPlayer: null,
             zobristHash: this.gameService.calculateInitialHash(boardSize),
             previousHashes: new Set(),
             createdAt: new Date(),
@@ -79,7 +83,7 @@ export class RoomService implements OnModuleInit {
 
     addPlayerToRoom(roomId: string, playerId: string): boolean {
         const room = this.rooms.get(roomId);
-        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.state === 'waiting') {
+        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.gameState === 'waiting') {
 
             // Remove player from other rooms
             this.rooms.forEach((otherRoom) => {
@@ -112,8 +116,8 @@ export class RoomService implements OnModuleInit {
 
     startGame(roomId: string): boolean {
         const room = this.rooms.get(roomId);
-        if (room && room.state === 'waiting' && room.players.length === room.roomSize) {
-            room.state = 'playing';
+        if (room && room.gameState === 'waiting' && room.players.length === room.roomSize) {
+            room.gameState = 'playing';
             room.board = this.initializedBoard(room.boardSize);
             return true;
         }
@@ -128,7 +132,7 @@ export class RoomService implements OnModuleInit {
         console.log(`[INFO] Current Rooms (${this.rooms.size}):`);
         console.log('---------------------------------------------------------');
         this.rooms.forEach((room) => {
-            console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.roomSize}, State: ${room.state}`);
+            console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.roomSize}, State: ${room.gameState}`);
         });
         console.log('---------------------------------------------------------');
     }
@@ -141,7 +145,7 @@ export class RoomService implements OnModuleInit {
             console.log(`Players:           ${room.players.join(', ')}`);
             console.log(`Board Size:        ${room.boardSize}`);
             console.log(`Current Player:    ${room.currentPlayer}`);
-            console.log(`State:             ${room.state}`);
+            console.log(`State:             ${room.gameState}`);
             console.log('---------------------------------------------------------');
         } else {
             console.log(`Room with ID ${roomId} not found.`);

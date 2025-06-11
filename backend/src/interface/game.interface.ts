@@ -22,7 +22,7 @@ export interface GameRoom {
     koPosition: Position | null;
 
     playersConfirmed: string[];
-    scores: number[];
+    territoryScores: number[];
 
     passCount: number;
     markedStones: Position[][];

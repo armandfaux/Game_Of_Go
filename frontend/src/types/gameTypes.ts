@@ -1,11 +1,5 @@
 export type Stone = 'empty' | 'black' | 'white' | 'green' | 'purple';
 
-// export type Player = {
-//     id: string,
-//     name: string,
-//     color: string,
-// }
-
 export type Position = {
     x: number,
     y: number,
@@ -24,7 +18,7 @@ export type RoomInfoObj = {
     koPosition: Position | null,
 
     playersConfirmed: string[],
-    scores: number[],
+    territoryScores: number[],
 
 }
 

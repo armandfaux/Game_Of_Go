@@ -10,7 +10,7 @@ const JoinGameBtn: React.FC<JoinGameBtnProps> = ({ socket }) => {
 
   const handleJoin = () => {
     if (socket && roomId.trim() !== '') {
-      socket.emit('joinRoom', roomId.trim());
+      socket.emit('joinRoom', roomId.trim().toUpperCase());
     } else {
       console.warn('No room ID or socket not connected');
     }

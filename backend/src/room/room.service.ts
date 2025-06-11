@@ -5,8 +5,8 @@ import { setInterval } from 'timers/promises';
 
 @Injectable()
 export class RoomService implements OnModuleInit {
-    private readonly rooms = new Map<string, GameRoom>();
     private readonly ROOM_TTL_MS = 1000 * 3600 * 24;
+    private readonly rooms = new Map<string, GameRoom>();
 
     constructor(private gameService: GameService) {}
 
@@ -51,7 +51,7 @@ export class RoomService implements OnModuleInit {
 
     createRoom(roomSize: number, boardSize: number): GameRoom {
         const roomId = this.generateRoomId();
-        const board = Array(boardSize).fill(null).map(() => new Array(boardSize).fill(0));        
+        const board = this.initializedBoard(boardSize);
 
         const newRoom: GameRoom = {
             id: roomId,
@@ -66,7 +66,7 @@ export class RoomService implements OnModuleInit {
             koPosition: null,
             
             playersConfirmed: [],
-            scores: new Array(roomSize + 1).fill(0), // scores[0] indicates neutral territory (dame)
+            territoryScores: new Array(roomSize + 1).fill(0), // scores[0] indicates neutral territory (dame)
 
             passCount: 0,
             markedStones: Array.from({ length: roomSize }, () => [] as Position[]),
@@ -124,7 +124,7 @@ export class RoomService implements OnModuleInit {
         return false;
     }
 
-        getRoom(roomId: string): GameRoom | undefined {
+    getRoom(roomId: string): GameRoom | undefined {
         return this.rooms.get(roomId);
     }
 

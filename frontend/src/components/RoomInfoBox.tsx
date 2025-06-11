@@ -1,31 +1,21 @@
 // components/RoomInfo.tsx
 import React from 'react';
 import '../styles/RoomInfo.css';
-import { Socket } from 'socket.io-client';
 import { RoomInfoObj } from '../types/gameTypes';
 
-type RoomInfoProps = {
-  // roomId: string;
-  // players: string[];
-  // roomSize: number;
-  // boardSize: number;
-  // currentPlayer: 'Black' | 'White' | 'Green' | 'Purple' | 'Other';
-  // prisoners: number[];
-  // gameState: string;
+type RoomInfoBoxProps = {
   socketId: string | undefined;
   roomInfo: RoomInfoObj
 };
 
 const playerColors = ['Black', 'White', 'Green', 'Purple'];
 
-const RoomInfo: React.FC<RoomInfoProps> = ({
+const RoomInfoBox: React.FC<RoomInfoBoxProps> = ({
   roomInfo,
   socketId,
 }) => {
 
-  // const playerClass = socketId ? playerColors[roomInfo.players.indexOf(socketId || "")].toLowerCase() : '';
-  const playerClass = 'Black'
-  // console.log('[INFO] RoomInfo coponent:', roomInfo);
+  const playerClass = socketId ? playerColors[roomInfo.players.indexOf(socketId || "")].toLowerCase() : '';
   return (
     <div className={`room-info-card ${playerClass}`}>
       <h3 className="room-info-title">Room Information</h3>
@@ -78,4 +68,4 @@ const RoomInfo: React.FC<RoomInfoProps> = ({
   );
 };
 
-export default RoomInfo;
+export default RoomInfoBox;

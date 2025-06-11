@@ -223,10 +223,10 @@ export class GameService {
         console.log(`[EVENT] Game ${room.id} finished`);
         room.gameState = 'finished';
         this.removeDeadStones(room);
-        this.getTerritoryScores(room.board, room.roomSize).map((score, index) => {
+        this.getTerritoryScores(room.board, room.roomSize).map((territory, index) => {
             // scores[0] is neutral territory (dame)
             // following values are player scores (added to prisoners)
-            room.scores[index] += (index === 0) ? score : score + room.prisoners[index - 1];
+            room.territoryScores[index] = territory;
         });
     }
 
@@ -296,7 +296,7 @@ export class GameService {
             const territoryColor = this.findTerritoryColor(room.board, group, room.markedStones[0]);
 
             if (territoryColor > 0) {
-                room.scores[territoryColor] += 1;
+                room.prisoners[territoryColor - 1] += 1;
             }
         });
     }

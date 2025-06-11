@@ -6,7 +6,7 @@ interface IntersectionProps {
   position: { x: number; y: number };
   socket: Socket;
   roomId: string;
-  color: 'empty' | 'black' | 'white' | 'green' | 'purple';
+  color: number;
   boardSize: number;
   isLastRow: boolean;
   isLastCol: boolean;
@@ -37,7 +37,11 @@ const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, c
 
       <div
           className={`intersection-dot
-            ${color}
+            ${color === 1 ? 'black' :
+              color === 2 ? 'white' :
+              color === 3 ? 'green' :
+              color === 4 ? 'purple' : 'empty'
+            }
             ${isLastMove ? 'last-move' : ''}
             ${isKo && gameState === 'playing' ? 'ko' : ''}
             ${isMarked ? 'marked' : ''}
@@ -53,8 +57,8 @@ const Intersection: React.FC<IntersectionProps> = ({ position, socket, roomId, c
             width: '100%',
             height: '100%',
             cursor: (
-              (gameState === 'playing' && color === 'empty') ? 'pointer' :
-              (gameState === 'scoring' && color !== 'empty') ? 'pointer' : 'default'),
+              (gameState === 'playing' && color === 0) ? 'pointer' :
+              (gameState === 'scoring' && color !== 0) ? 'pointer' : 'default'),
           }
         }
           onClick={handleClick}

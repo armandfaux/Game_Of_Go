@@ -1,4 +1,4 @@
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { RoomService } from './room.service';
 import { Position } from 'src/interface/game.interface';
 import { Server, Socket } from 'socket.io';
@@ -17,7 +17,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly roomService: RoomService,
     private readonly gameService: GameService,
-  ) {}
+  ) {};
 
   handleConnection(client: any, ...args: any[]) {
     client.emit('connected', { message: 'You are connected' });
@@ -25,7 +25,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: any) {
-    console.log('[DISCONNECTION] Client', client.id);
+    console.log('[DISCONNECT] Client', client.id);
   }
 
   @SubscribeMessage('createRoom')
@@ -119,8 +119,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     
     if (success) {
-      // console.log('[CLIENT', client.id, 'SENT] \'makeMove\' at position:', payload.position);
-      this.server.to(payload.roomId).emit('moveMade', {
+      this.server.to(payload.roomId).emit('updateRoomInfo', {
         position: payload.position,
         currentPlayer: room.currentPlayer,
         board: room.board,
@@ -143,15 +142,11 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const success = this.gameService.passTurn(room, client.id);
 
     if (success) {
-      this.server.to(roomId).emit('turnPassed', {
+      this.server.to(roomId).emit('updateRoomInfo', {
+        id: room.id,
         currentPlayer: room.currentPlayer,
+        gameState: room.gameState,
       });
-      if (room.gameState === 'scoring') {
-        this.server.to(roomId).emit('updateRoomInfo', {
-          id: room.id,
-          gameState: room.gameState,
-        });
-      }
     } else {
       client.emit('error', { message: 'Cannot pass turn' });
     }
@@ -217,9 +212,9 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       } else if (room.gameState === 'finished') {
           this.server.to(roomId).emit('updateRoomInfo', {
             id: room.id,
-            board: room.board,
             gameState: room.gameState,
-            scores: room.scores,
+            prisoners: room.prisoners,
+            territoryScores: room.territoryScores,
         });
       }
     } else {

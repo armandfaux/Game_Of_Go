@@ -5,8 +5,8 @@ import { setInterval } from 'timers/promises';
 
 @Injectable()
 export class RoomService implements OnModuleInit {
-    private readonly rooms = new Map<string, GameRoom>();
     private readonly ROOM_TTL_MS = 1000 * 3600 * 24;
+    private readonly rooms = new Map<string, GameRoom>();
 
     constructor(private gameService: GameService) {}
 
@@ -15,7 +15,7 @@ export class RoomService implements OnModuleInit {
     }
 
     private async startCleanupJob() {
-        const intervalMs = 1000 * 3600 * 12;
+        const intervalMs = 1000 * 3600 * 6;
 
         for await (const _ of setInterval(intervalMs)) {
             await this.cleanupOldRooms();
@@ -51,23 +51,29 @@ export class RoomService implements OnModuleInit {
 
     createRoom(roomSize: number, boardSize: number): GameRoom {
         const roomId = this.generateRoomId();
-        const board = Array(boardSize).fill(null).map(() => new Array(boardSize).fill(0));        
+        const board = this.initializedBoard(boardSize);
 
         const newRoom: GameRoom = {
             id: roomId,
             roomSize,
             players: [],
+            currentPlayer: 1,
+            gameState: 'waiting',
+
             boardSize,
             board,
-            currentPlayer: 1,
             prisoners: new Array(roomSize).fill(0),
-            moveHistory: [],
+            koPosition: null,
+            
+            playersConfirmed: [],
+            territoryScores: new Array(roomSize + 1).fill(0), // scores[0] indicates neutral territory (dame)
+
             passCount: 0,
-            state: 'waiting',
-            createdAt: new Date(),
-            koInfo: { position: null, restrictedPlayer: null },
+            markedStones: Array.from({ length: roomSize }, () => [] as Position[]),
+            restrictedPlayer: null,
             zobristHash: this.gameService.calculateInitialHash(boardSize),
-            previousHashes: new Set()
+            previousHashes: new Set(),
+            createdAt: new Date(),
         };
 
         newRoom.previousHashes.add(newRoom.zobristHash);
@@ -77,7 +83,7 @@ export class RoomService implements OnModuleInit {
 
     addPlayerToRoom(roomId: string, playerId: string): boolean {
         const room = this.rooms.get(roomId);
-        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.state === 'waiting') {
+        if (room && !room.players.includes(playerId) && room.players.length < room.roomSize && room.gameState === 'waiting') {
 
             // Remove player from other rooms
             this.rooms.forEach((otherRoom) => {
@@ -110,15 +116,15 @@ export class RoomService implements OnModuleInit {
 
     startGame(roomId: string): boolean {
         const room = this.rooms.get(roomId);
-        if (room && room.state === 'waiting' && room.players.length === room.roomSize) {
-            room.state = 'playing';
+        if (room && room.gameState === 'waiting' && room.players.length === room.roomSize) {
+            room.gameState = 'playing';
             room.board = this.initializedBoard(room.boardSize);
             return true;
         }
         return false;
     }
 
-        getRoom(roomId: string): GameRoom | undefined {
+    getRoom(roomId: string): GameRoom | undefined {
         return this.rooms.get(roomId);
     }
 
@@ -126,7 +132,7 @@ export class RoomService implements OnModuleInit {
         console.log(`[INFO] Current Rooms (${this.rooms.size}):`);
         console.log('---------------------------------------------------------');
         this.rooms.forEach((room) => {
-            console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.roomSize}, State: ${room.state}`);
+            console.log(`Room ID: ${room.id}, Players: ${room.players.length}/${room.roomSize}, State: ${room.gameState}`);
         });
         console.log('---------------------------------------------------------');
     }
@@ -139,8 +145,7 @@ export class RoomService implements OnModuleInit {
             console.log(`Players:           ${room.players.join(', ')}`);
             console.log(`Board Size:        ${room.boardSize}`);
             console.log(`Current Player:    ${room.currentPlayer}`);
-            console.log(`State:             ${room.state}`);
-            console.log(`Moves played:      ${room.moveHistory.length}`);
+            console.log(`State:             ${room.gameState}`);
             console.log('---------------------------------------------------------');
         } else {
             console.log(`Room with ID ${roomId} not found.`);

@@ -13,24 +13,21 @@ export interface GameRoom {
     id: string;
     roomSize: number;
     players: string[];
-    boardSize: number;
-    board: number[][]; // 0 = empty, 1 = black, 2 = white
     currentPlayer: number;
+    gameState: 'waiting' | 'playing' | 'scoring' | 'finished';
+
+    boardSize: number;
+    board: number[][];
     prisoners: number[];
-    moveHistory: Move[];
+    koPosition: Position | null;
+
+    playersConfirmed: string[];
+    territoryScores: number[];
+
     passCount: number;
-    state: 'waiting' | 'playing' | 'scoring' | 'finished';
-    createdAt: Date;
-    koInfo: {
-        position: Position | null;
-        restrictedPlayer: number | null;
-    };
+    markedStones: Position[][];
+    restrictedPlayer: number | null;
     zobristHash: bigint;
     previousHashes: Set<bigint>;
+    createdAt: Date;
 }
-
-// interface GroupGraph {
-//   stones: Position[];      // All stones in the group
-//   liberties: Position[];   // Current liberties
-//   children: GroupGraph[];  // Possible future states after moves
-// }

@@ -2,12 +2,12 @@
 import React from 'react';
 import { Socket } from 'socket.io-client';
 
-type ResignProps = {
+type ResignBtnProps = {
   socket: Socket | null;
   roomId: string;
 };
 
-const Resign: React.FC<ResignProps> = ({ socket, roomId }) => {
+const ResignBtn: React.FC<ResignBtnProps> = ({ socket, roomId }) => {
   const handlePassTurn = () => {
     if (socket && roomId) {
       socket.emit('resign', roomId);
@@ -34,4 +34,4 @@ const Resign: React.FC<ResignProps> = ({ socket, roomId }) => {
   );
 };
 
-export default Resign;
+export default ResignBtn;

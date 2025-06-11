@@ -1,4 +1,4 @@
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { RoomService } from './room.service';
 import { Position } from 'src/interface/game.interface';
 import { Server, Socket } from 'socket.io';
@@ -17,17 +17,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly roomService: RoomService,
     private readonly gameService: GameService,
-  ) {}
-
-  private minRoomSize = 2;
-  private maxRoomSize = 4;
-
-  private minBoardSize = 9;
-  private maxBoardSize = 19;
-
-  // afterInit(server: Server) {
-  //   console.log('WebSocket Gateway initialized');
-  // }
+  ) {};
 
   handleConnection(client: any, ...args: any[]) {
     client.emit('connected', { message: 'You are connected' });
@@ -35,16 +25,16 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: any) {
-    console.log('[DISCONNECTION] Client', client.id);
+    console.log('[DISCONNECT] Client', client.id);
   }
 
   @SubscribeMessage('createRoom')
   handleCreateRoom(client: Socket, payload: { roomSize: number; boardSize: number }) {
-    if (payload.roomSize < this.minRoomSize || payload.roomSize > this.maxRoomSize) {
+    if (payload.roomSize < this.gameService.minPlayers || payload.roomSize > this.gameService.maxPlayers) {
       return client.emit('error', { message: 'Invalid room size' });
     }
 
-    if (payload.boardSize < this.minBoardSize || payload.boardSize > this.maxBoardSize) {
+    if (payload.boardSize < this.gameService.minBoardSize || payload.boardSize > this.gameService.maxBoardSize) {
       return client.emit('error', { message: 'Invalid board size' });
     }
 
@@ -52,14 +42,14 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.roomService.addPlayerToRoom(room.id, client.id);
 
     client.join(room.id);
-    client.emit('roomCreated', { 
-      roomId: room.id,
+    client.emit('updateRoomInfo', { 
+      id: room.id,
       roomSize: payload.roomSize,
       players: room.players,
       boardSize: payload.boardSize,
       currentPlayer: room.currentPlayer,
       prisoners: room.prisoners,
-      gameState: room.state
+      gameState: room.gameState
     });
     console.log(`[EVENT] Creating room | id: ${room.id} | board size: ${payload.boardSize} | player count: ${payload.roomSize}`);
   }
@@ -79,15 +69,15 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     client.join(roomId);
-    this.server.to(roomId).emit('playerJoined', {
+    this.server.to(roomId).emit('updateRoomInfo', {
+      id: roomId,
       playerId: client.id,
-      roomId: roomId,
       roomSize: room.roomSize,
       players: room.players,
       boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
       prisoners: room.prisoners,
-      gameState: room.state,
+      gameState: room.gameState,
     });
   }
 
@@ -103,13 +93,13 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return client.emit('error', { message: 'Cannot start game' });
     }
 
-    this.server.to(roomId).emit('gameStarted', {
-      roomId: room.id,
+    this.server.to(roomId).emit('updateRoomInfo', {
+      id: room.id,
       roomSize: room.roomSize,
       board: room.board,
       boardSize: room.boardSize,
       currentPlayer: room.currentPlayer,
-      gameState: room.state,
+      gameState: room.gameState,
     });
   }
 
@@ -129,13 +119,12 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     
     if (success) {
-      // console.log('[CLIENT', client.id, 'SENT] \'makeMove\' at position:', payload.position);
-      this.server.to(payload.roomId).emit('moveMade', {
+      this.server.to(payload.roomId).emit('updateRoomInfo', {
         position: payload.position,
         currentPlayer: room.currentPlayer,
         board: room.board,
         prisoners: room.prisoners,
-        koPosition: room.koInfo.position,
+        koPosition: room.koPosition,
       });
     } else {
       client.emit('invalidMove', { position: payload.position });
@@ -153,15 +142,11 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const success = this.gameService.passTurn(room, client.id);
 
     if (success) {
-      this.server.to(roomId).emit('turnPassed', {
+      this.server.to(roomId).emit('updateRoomInfo', {
+        id: room.id,
         currentPlayer: room.currentPlayer,
+        gameState: room.gameState,
       });
-      if (room.state === 'scoring') {
-        this.server.to(roomId).emit('gameScoring', {
-          roomId: room.id,
-          gameState: room.state,
-        });
-      }
     } else {
       client.emit('error', { message: 'Cannot pass turn' });
     }
@@ -178,12 +163,62 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const success = this.gameService.resign(room, client.id);
 
     if (success) {
-      this.server.to(roomId).emit('gameFinished', {
-        roomId: room.id,
-        gameState: room.state,
+      this.server.to(roomId).emit('updateRoomInfo', {
+        id: room.id,
+        gameState: room.gameState,
       });
     } else {
       client.emit('error', { message: 'Cannot resign' });
+    }
+  }
+
+  @SubscribeMessage('markStone')
+  handleMarkStone(client: Socket, payload: { roomId: string; position: Position }) {
+
+    const room = this.roomService.getRoom(payload.roomId);
+
+    if (!room) {
+      return client.emit('error', { message: 'Room not found' });
+    }
+
+    const success = this.gameService.markGroup(room, client.id, payload.position);
+
+    if (success) {
+      this.server.to(payload.roomId).emit('stoneMarked', {
+        markedStones: room.markedStones,
+      });
+    } else {
+      client.emit('error', { message: 'Cannot mark stone' });
+    }
+  }
+
+  @SubscribeMessage('confirmMarking')
+  handleConfirmMarking(client: Socket, roomId: string) {
+    const room = this.roomService.getRoom(roomId);
+
+    if (!room) {
+      return client.emit('error', { message: 'Room not found' });
+    }
+    
+    const success = this.gameService.confirmMarking(room, client.id);
+
+    if (success) {
+      if (room.gameState === 'scoring') {
+        this.server.to(roomId).emit('markingConfirmed', {
+          roomId: room.id,
+          gameState: room.gameState,
+          playersConfirmed: room.playersConfirmed,
+        });
+      } else if (room.gameState === 'finished') {
+          this.server.to(roomId).emit('updateRoomInfo', {
+            id: room.id,
+            gameState: room.gameState,
+            prisoners: room.prisoners,
+            territoryScores: room.territoryScores,
+        });
+      }
+    } else {
+      client.emit('error', { message: 'Cannot confirm marking' });
     }
   }
 }

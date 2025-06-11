@@ -62,14 +62,14 @@
 }
 
 .info-label {
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: #7f8c8d;
   margin-bottom: 2px;
   font-weight: 500;
 }
 
 .info-value {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #34495e;
   font-weight: 600;
 }
@@ -121,10 +121,11 @@
 .player-white { color: #7f8c8d; }
 .player-green { color: #27ae60; }
 .player-purple { color: #9036b7; }
-.player-other { color: #e74c3c; }
+.player-other { color: #3c47e7; }
 
 /* Status color classes */
-.status-waiting { color: #de931b; }
+.status-waiting { color: #dea71b; }
 .status-playing { color: #138c45; }
+.status-scoring { color: #3c47e7; }
 .status-finished { color: #e74c3c; }
 .status-undefined { color: #7f8c8d; }

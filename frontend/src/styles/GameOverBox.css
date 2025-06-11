@@ -1,0 +1,50 @@
+.compact-game-over {
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    margin: 10px auto;
+    font-family: 'Arial', sans-serif;
+}
+
+.compact-game-over h3 {
+    margin: 0 0 10px 0;
+    text-align: center;
+    color: #333;
+    font-size: 18px;
+}
+
+.score-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.score-item:last-child {
+    border-bottom: none;
+}
+
+.player-name {
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.player-score {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.score-details {
+    font-size: 0.85em;
+    color: #666;
+    font-weight: normal;
+}

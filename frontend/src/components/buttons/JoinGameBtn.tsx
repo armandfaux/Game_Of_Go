@@ -1,16 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 
-interface JoinGameProps {
+interface JoinGameBtnProps {
   socket: Socket | null;
 }
 
-const JoinGame: React.FC<JoinGameProps> = ({ socket }) => {
+const JoinGameBtn: React.FC<JoinGameBtnProps> = ({ socket }) => {
   const [roomId, setRoomId] = useState('');
 
   const handleJoin = () => {
     if (socket && roomId.trim() !== '') {
-      socket.emit('joinRoom', roomId.trim());
+      socket.emit('joinRoom', roomId.trim().toUpperCase());
     } else {
       console.warn('No room ID or socket not connected');
     }
@@ -49,4 +49,4 @@ const JoinGame: React.FC<JoinGameProps> = ({ socket }) => {
   );
 };
 
-export default JoinGame;
+export default JoinGameBtn;

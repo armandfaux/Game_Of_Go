@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Socket } from 'socket.io-client';
-import styles from '../styles/CreateGame.module.css';
+import '../../styles/CreateGameBtn.css';
 
-interface CreateGameProps {
+interface CreateGameBtnProps {
   socket: Socket | null;
 }
 
-const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
-  const [boardSize, setBoardSize] = useState<number>(19);
+const CreateGameBtn: React.FC<CreateGameBtnProps> = ({ socket }) => {
+  const defaultBoardSize = 13;
+  const [boardSize, setBoardSize] = useState<number>(defaultBoardSize);
   const [roomSize, setRoomSize] = useState<number>(2);
 
   const handleCreateRoom = () => {
@@ -19,34 +20,36 @@ const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
   };
 
   return (
-    <div className={styles.container}>
-      <h3 className={styles.title}>Create New Game</h3>
+    <div className={'container'}>
+      <h3 className={'title'}>Create New Game</h3>
       
-      <div className={styles.formGroup}>
-        <label htmlFor="board-size" className={styles.label}>
+      <div className={'formGroup'}>
+        <label htmlFor="board-size" className={'label'}>
           Board Size
         </label>
         <select
           id="board-size"
-          value={boardSize}
           onChange={(e) => setBoardSize(Number(e.target.value))}
-          className={styles.select}
+          className={'select'}
+          defaultValue={defaultBoardSize}
         >
-          <option value={9}>9×9 (Beginner)</option>
-          <option value={13}>13×13 (Intermediate)</option>
-          <option value={19}>19×19 (Standard)</option>
+          <option value={5}>5×5 (First steps)</option>
+          <option value={9}>9×9 (Small)</option>
+          <option value={13}>13×13 (Medium)</option>
+          <option value={19}>19×19 (Official)</option>
+          <option value={24}>24×24 (Huge)</option>
         </select>
       </div>
 
-      <div className={styles.formGroup}>
-        <label htmlFor="room-size" className={styles.label}>
+      <div className={'formGroup'}>
+        <label htmlFor="room-size" className={'label'}>
           Number of Players
         </label>
         <select
           id="room-size"
           value={roomSize}
           onChange={(e) => setRoomSize(Number(e.target.value))}
-          className={styles.select}
+          className={'select'}
         >
           <option value={2}>2 Players</option>
           <option value={3}>3 Players</option>
@@ -56,7 +59,7 @@ const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
 
       <button
         onClick={handleCreateRoom}
-        className={styles.button}
+        className={'button'}
       >
         Create Game Room
       </button>
@@ -64,4 +67,4 @@ const CreateGame: React.FC<CreateGameProps> = ({ socket }) => {
   );
 };
 
-export default CreateGame;
+export default CreateGameBtn;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { GameRoom, Position } from 'src/interface/game.interface';
+import { Logger } from '@nestjs/common';
 
 // DESCRIPTION:
 // The GameService is responsible for managing the game logic,
@@ -8,16 +9,28 @@ import { GameRoom, Position } from 'src/interface/game.interface';
 
 @Injectable()
 export class GameService {
+    logger = new Logger(GameService.name);
+
     private readonly directions = [
         { x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }
     ];
 
+    afterInit() {
+        console.log('GameService initialized');
+    };
+
+    public minPlayers = 2;
+    public maxPlayers = 4;
+
+    public minBoardSize = 5;
+    public maxBoardSize = 24;
+
     constructor() {
-        this.initializeZobristTable(19);
+        this.initializeZobristTable(this.maxBoardSize);
     }
 
     isValidMove(room: GameRoom, playerId: string, position: Position): boolean {
-        if (room.state !== 'playing') return false;
+        if (room.gameState !== 'playing') return false;
 
         // Check if the player is in the room
         const playerIndex = room.players.indexOf(playerId);
@@ -34,10 +47,10 @@ export class GameService {
         }
 
         // Check KO rule
-        if (room.koInfo.position && 
-            room.koInfo.position.x === position.x && 
-            room.koInfo.position.y === position.y && 
-            room.koInfo.restrictedPlayer === room.currentPlayer) {
+        if (room.koPosition && 
+            room.koPosition.x === position.x && 
+            room.koPosition.y === position.y && 
+            room.restrictedPlayer === room.currentPlayer) {
             return false;
         }
 
@@ -81,14 +94,17 @@ export class GameService {
         // Update game state
         room.board = newBoard;
         room.prisoners[moveColor - 1] += capturedStones.length;
-        room.moveHistory.push({ playerId, position, color: moveColor });
         room.currentPlayer = (moveColor % room.players.length) + 1;
         room.passCount = 0;
 
         // Update KO info
-        room.koInfo = capturedStones.length === 1
-            ? { position: capturedStones[0], restrictedPlayer: room.currentPlayer }
-            : { position: null, restrictedPlayer: null };
+        room.koPosition = capturedStones.length === 1
+            ? capturedStones[0]
+            : null;
+
+        room.restrictedPlayer = capturedStones.length === 1
+            ? room.currentPlayer
+            : null;
 
         // Update hashes
         room.previousHashes.add(newHash);
@@ -169,17 +185,17 @@ export class GameService {
     }
 
     passTurn(room: GameRoom, playerId: string): boolean {
-        if (!room || room.state !== 'playing') return false;
+        if (!room || room.gameState !== 'playing') return false;
 
         const playerIndex = room.players.indexOf(playerId);
         if (playerIndex === -1 || room.currentPlayer !== playerIndex + 1) return false;
 
-        room.koInfo = { position: null, restrictedPlayer: null };
+        room.koPosition = null;
+        room.restrictedPlayer = null;
         room.currentPlayer = (room.currentPlayer % room.players.length) + 1;
 
         if (++room.passCount >= room.roomSize) {
-            room.state = 'scoring';
-            // this.finishGame(room);
+            room.gameState = 'scoring';
         }
 
         return true;
@@ -187,7 +203,7 @@ export class GameService {
 
     resign(room: GameRoom, playerId: string): boolean {
         // Check if the room exists and is playing
-        if (!room || room.state !== 'playing') return false;
+        if (!room || room.gameState !== 'playing') return false;
 
         // Check if the player is in the room
         const playerIndex = room.players.indexOf(playerId);
@@ -202,11 +218,87 @@ export class GameService {
     // ----------- End of game system ------------
     // -------------------------------------------
     finishGame(room: GameRoom): void {
-        if (!room || room.state !== 'playing') return;
+        if (!room) return;
 
         console.log(`[EVENT] Game ${room.id} finished`);
-        room.state = 'finished';
-        this.getTerritoryScores(room.board, room.roomSize);
+        room.gameState = 'finished';
+        this.removeDeadStones(room);
+        this.getTerritoryScores(room.board, room.roomSize).map((territory, index) => {
+            // scores[0] is neutral territory (dame)
+            // following values are player scores (added to prisoners)
+            room.territoryScores[index] = territory;
+        });
+    }
+
+    markGroup(room: GameRoom, playerId: string, start: Position): boolean {
+        if (!room || room.gameState !== 'scoring') return false;
+        if (room.board[start.x][start.y] === 0) return false;
+
+        const playerIndex = room.players.indexOf(playerId);
+        if (playerIndex === -1) return false;
+
+        const positions = this.findGroup(room.board, start);
+        if (room.markedStones[playerIndex].some(pos => start.x === pos.x && start.y === pos.y)) {
+            // unmark if already marked
+            room.markedStones[playerIndex] = room.markedStones[playerIndex].filter(pos => !positions.some(p => p.x === pos.x && p.y === pos.y));
+        } else {
+            // mark the group
+            room.markedStones[playerIndex] = room.markedStones[playerIndex].concat(positions);
+        }
+
+        room.playersConfirmed = [];
+        return true;
+    }
+
+    // Return true if all players have marked the same stones as "dead", false otherwise
+    checkMarkedStones(stones: Position[][]): boolean {
+        const signature = JSON.stringify(stones[0].slice().sort((a, b) => a.x - b.x || a.y - b.y));
+
+        return stones.every(subArray => {
+            const currentSignature = JSON.stringify(
+                subArray.slice().sort((a, b) => a.x - b.x || a.y - b.y)
+            );
+            return currentSignature === signature;
+        });
+    }
+
+    // Return true if the player can confirm or cancel, false otherwise
+    confirmMarking(room: GameRoom, playerId: string): boolean {
+        if (!room || room.gameState !== 'scoring') return false;
+
+        if (!room.players.includes(playerId)) return false;
+
+        if (room.playersConfirmed.includes(playerId)) {
+            room.playersConfirmed = room.playersConfirmed.filter(id => id !== playerId);
+            return true;
+        }
+
+        if (this.checkMarkedStones(room.markedStones)) {
+
+            room.playersConfirmed.push(playerId);
+
+            // Check if all players have confirmed
+            if (room.playersConfirmed.length >= room.players.length) {
+                this.finishGame(room);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    removeDeadStones(room: GameRoom): void {
+        if (!room) return;
+
+        room.markedStones[0].forEach(pos => {
+            room.board[pos.x][pos.y] = 0; // Remove the stone from the board
+
+            const group = this.findGroup(room.board, pos);
+            const territoryColor = this.findTerritoryColor(room.board, group, room.markedStones[0]);
+
+            if (territoryColor > 0) {
+                room.prisoners[territoryColor - 1] += 1;
+            }
+        });
     }
 
     getTerritoryScores(board: number[][], roomSize: number): number[] {
@@ -219,7 +311,7 @@ export class GameService {
 
             const group = this.findGroup(board, pos);
 
-            const territoryColor = this.findTerritoryColor(board, group);
+            const territoryColor = this.findTerritoryColor(board, group, []);
             territoryScore[territoryColor] += group.length;
 
             group.map(p => visited.push(p));
@@ -235,7 +327,8 @@ export class GameService {
         );
     }
 
-    findTerritoryColor(board: number[][], group: Position[]): number {
+    // Return index of the player owning this territory, ignore Position in deadStones[]
+    findTerritoryColor(board: number[][], group: Position[], deadStones: Position[]): number {
         var territoryColor = 0;
 
         for (const pos of group) {
@@ -243,7 +336,8 @@ export class GameService {
                 const newX = pos.x + dir.x;
                 const newY = pos.y + dir.y;
 
-                if (newX < 0 || newX >= board.length || newY < 0 || newY >= board[newX].length) continue
+                if (newX < 0 || newX >= board.length || newY < 0 || newY >= board[newX].length) continue;
+                if (deadStones.some(p => p.x === newX && p.y === newY)) continue;
 
                 if (board[newX][newY] > 0) {
                     if (territoryColor === 0) {
@@ -259,8 +353,6 @@ export class GameService {
 
         return territoryColor;
     }
-
-
 
     // -------------------------------------------
     // -- Zobrist hashing for superko detection --

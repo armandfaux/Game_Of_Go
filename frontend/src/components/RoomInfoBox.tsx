@@ -1,6 +1,6 @@
 // components/RoomInfo.tsx
 import React from 'react';
-import '../styles/RoomInfo.css';
+import '../styles/RoomInfoBox.css';
 import { RoomInfoObj } from '../types/gameTypes';
 
 type RoomInfoBoxProps = {

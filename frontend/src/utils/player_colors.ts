@@ -1,0 +1,1 @@
+export const playerColors = ['Black', 'White', 'Green', 'Purple', 'Other'] as const;

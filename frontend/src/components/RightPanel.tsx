@@ -17,7 +17,7 @@ type RightPanelProps = {
 
 const RightPanel: React.FC<RightPanelProps> = ({ socket, roomInfo, isConfirmed }) => {
   return (
-    <aside className='right-panel'>
+    <div className='right-panel'>
       {socket && roomInfo.id !== '' && (
         <div>
           <RoomInfoBox
@@ -47,7 +47,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ socket, roomInfo, isConfirmed }
           <GameOverBox roomInfo={roomInfo}/>
         </div>
       )}
-    </aside>
+    </div>
   );
 }
 

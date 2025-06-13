@@ -4,6 +4,7 @@ import Intersection from './Intersection';
 import { Socket } from 'socket.io-client';
 import { Position, RoomInfoObj, Stone } from '../types/gameTypes';
 import { getStarPoints } from '../utils/star_points';
+import { playerColors } from '../utils/player_colors';
 
 interface GobanProps {
   socket: Socket;
@@ -80,6 +81,9 @@ const Goban: React.FC<GobanProps> = ({ socket, roomInfo }) => {
     }
   }
 
+  const totalScores = roomInfo.territoryScores.slice(1).map((value, index) => value + roomInfo.prisoners[index]);
+  const winner = playerColors[totalScores.indexOf(Math.max(...totalScores))];
+
   return (
     <div>
       <h3 className="goban-label">
@@ -87,7 +91,7 @@ const Goban: React.FC<GobanProps> = ({ socket, roomInfo }) => {
           roomInfo.gameState === 'waiting' ? 'Waiting for players...' :
           roomInfo.gameState === 'playing' ? 'Game has started' :
           roomInfo.gameState === 'scoring' ? 'Mark the dead stones' :
-          roomInfo.gameState === 'finished' ? `won the game` : ''
+          roomInfo.gameState === 'finished' ? `${winner} has won the game` : ''
         }
       </h3>
     <div className={`goban ${roomInfo.gameState}`} style={{ '--size': roomInfo.boardSize } as React.CSSProperties}>

@@ -13,7 +13,7 @@ type MainContentProps = {
 
 const MainContent: React.FC<MainContentProps> = ({ socket, roomInfo }) => {
     return (
-        <main className='main-panel'>
+        <div className='main-panel'>
             {socket && roomInfo.gameState !== 'waiting' && (
                 <div style={{margin: '35px'}}>
                     <Goban
@@ -22,7 +22,7 @@ const MainContent: React.FC<MainContentProps> = ({ socket, roomInfo }) => {
                     />
                 </div>
             )}
-        </main>
+        </div>
     )
 }
 

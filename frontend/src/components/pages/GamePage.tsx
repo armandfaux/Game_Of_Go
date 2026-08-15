@@ -32,13 +32,10 @@ function GamePage() {
   });
 
   useEffect(() => {
-    console.log('[INFO] websocket address: ', process.env.REACT_APP_WS_URL);
+    const websocketUrl = process.env.REACT_APP_WS_URL || `http://${window.location.hostname}:3001`;
+    console.log('[INFO] websocket address: ', websocketUrl);
     
-    // PRODUCTION
-    // const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:3001');
-
-    // DEVELOPMENT
-    const socketInstance = io('http://localhost:3001');
+    const socketInstance = io(websocketUrl);
 
     // Enable React auto rendering on socket events
     setSocket(socketInstance);
